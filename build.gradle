@@ -1,0 +1,34 @@
+def srcFile = file('thucydides.doc')
+def srcImages = file("$projectDir/images")
+def srcFigures = file("$projectDir/figs")
+def destFile = file("$buildDir/thucydides.html")  
+def destImages = file("$buildDir/images")
+def destFigures = file("$buildDir/figs")
+
+task copyImages(type: Copy) {
+   	from srcImages
+  	into destImages 
+} 
+
+task copyFigs(type: Copy) {
+   	from srcFigures
+  	into destFigures 
+} 
+
+task generateDocumentation() {    
+	dependsOn << [copyImages, copyFigs]    
+	
+	inputs.file srcFile
+	outputs.file destFile 
+	                                                                                                       
+	"asciidoc -b html5 -a icons -a toc2 -a numbered -a pygments -o $destFile $srcFile".execute() 
+
+}
+
+task build {
+	dependsOn << generateDocumentation
+}                                     
+
+task clean {
+	buildDir.deleteDir()
+}
