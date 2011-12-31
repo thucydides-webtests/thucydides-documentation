@@ -1285,6 +1285,67 @@ However, a simpler option would be to do this:
 element(By.xpath("//li/a[contains(.,'" + postcode + "')]")).click();
 ----------------------
 
+=== Working with Asynchronous Pages
+
+Asynchronous pages are those whose fields or data is not all displayed when the page is loaded. Sometimes, you need to wait for certain elements to appear, or to disappear, before being able to proceed with your tests. Thucydides provides some handy methods in the PageObject base class to help with these scenarios. They are primarily designed to be used as part of your business methods in your page objects, though in the examples we will show them used as external calls on a PageObject instance for clarity.
+
+==== Checking whether an element is visible
+
+In WebDriver terms, there is a distinction between when an element is present on the screen (i.e. in the HTML source code), and when it is rendered (i.e. visible to the user). You may also need to check whether an element is visible on the screen. You can do this in two ways. Your first option is to use the isElementVisible method, which returns a boolean value based on whether the element is rendered (visible to the user) or not:
+
+[source,java]
+----------------------
+assertThat(indexPage.isElementVisible(By.xpath("//h2[.='A visible title']")), is(true));
+-----------------------
+
+or 
+
+[source,java]
+----------------------
+assertThat(indexPage.isElementVisible(By.xpath("//h2[.='An invisible title']")), is(false));
+----------------------
+
+Your second option is to actively assert that the element should be visible:
+
+[source,java]
+----------------------
+indexPage.shouldBeVisible(By.xpath("//h2[.='An invisible title']");
+----------------------
+
+If the element does not appear immediately, you can wait for it to appear:
+
+[source,java]
+----------------------
+indexPage.waitForRenderedElements(By.xpath("//h2[.='A title that is not immediately visible']"));
+----------------------
+
+You can also wait for an element to disappear:
+
+[source,java]
+----------------------
+indexPage.waitForRenderedElementsToDisappear(By.xpath("//h2[.='A title that will soon disappear']"));
+----------------------
+
+For simplicity, you can also use the +waitForTextToAppear+ and +waitForTextToDisappear+ methods:
+
+[source,java]
+----------------------
+indexPage.waitForTextToDisappear("A visible bit of text");
+----------------------
+
+If several possible texts may appear, you can use +waitForAnyTextToAppear+ or +waitForAllTextToAppear+:
+
+[source,java]
+----------------------
+indexPage.waitForAnyTextToAppear("this might appear","or this", "or even this");
+---------------------
+
+If you need to wait for one of several possible elements to appear, you can also use the +waitForAnyRenderedElementOf+ method:
+
+[source,java]
+----------------------
+indexPage.waitForAnyRenderedElementOf(By.id("color"), By.id("taste"), By.id("sound"));
+----------------------
 
 === Executing Javascript
 
@@ -2427,6 +2488,413 @@ public void checks_publication_details_on_confirmation_page() {
 
 If no variable is found with the requested name, the test will fail. The test session is cleared at the start of each test. 
 
+== Data-Driven Testing
+
+=== Data-Driven Tests in JUnit
+
+In JUnit 4, you can use the Parameterized test runner to perform data-driven tests. In Thucydides, you use the +ThucydidesParameterizedRunner+. This runner is very similar to the JUnit Parameterized test runner, except that you use the TestData annotation to provide test data, and you can use all of the other Thucydides annotations (+@Managed+, +@ManagedPages+, +@Steps+ and so on). This test runner will also generate proper Thucydides HTML and XML reports for the executed tests.
+
+An example of a data-driven Thucydides test is shown below. In this test, we are checking that valid ages and favorite colors are accepted by the sign-on page of an (imaginary) application. To test this, we use several combinations of ages and favorite colors, specified by the testData() method. These values are represented as instance variables in the test class, and instantiated via the constructor.
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+public class WhenEnteringPersonalDetails {
+
+    @TestData
+    public static Collection<Object[]> testData() {
+        return Arrays.asList(new Object[][]{
+                {25, "Red"},
+                {40, "Blue"},
+                {36, "Green"},
+        });
+    }
+
+    @Managed
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://www.myapp.com")
+    public Pages pages;
+
+    @Steps
+    public SignupSteps signup;
+
+    private Integer age;
+    private String favoriteColor;
+
+    public WhenEnteringPersonalDetails(Integer age, String favoriteColor) {
+        this.age = age;
+        this.favoriteColor = favoriteColor;
+    }
+
+    @Test 
+    public void valid_personal_details_should_be_accepted() {
+        signup.navigateToPersonalDetailsPage();
+        signup.enterPersonalDetails(age, favoriteColor);
+    }  
+}
+--------------
+
+=== Reporting on data-driven web tests
+
+When you generate reporting on data-driven web tests, the reports display full test outcomes and screenshots for each set of data. An overall story report is displayed for the data-driven test, which a test case for each row of test data. The test data used for each test is displayed in the report.
+    
+=== Running data-driven tests in parallel   
+
+Data-driven web tests can be long, especially if you need to navigate to a particular page before testing a different field value each time. In most cases, however, this is necessary, as it is unsafe to make assumptions about the state of the web page after a previous data-driven test. One effective way to speed them up, however, is to run them in parallel. You can configure +ThucydidesParameterizedRunner+ tests to run in parallel by using the Concurrent annotation.
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+@Concurrent
+public class WhenEnteringPersonalDetails {...
+-----------------
+
+By default, this will run your tests concurrently, by default using two threads per CPU core. If you want to fine-tune the number of threads to be used, you can specify the 'threads' annotation property.
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+@Concurrent(threads="4")
+public class WhenEnteringPersonalDetails {...
+--------------
+
+You can also express this as a value relative to the number of available processors. For example, to run 4 threads per CPU, you could specify the following:
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+@Concurrent(threads="4x")
+public class WhenEnteringPersonalDetails {...
+---------
+
+=== Data-driven testing using CSV files
+
+Thucydides lets you perform data-driven testing using test data in a CSV file. You store your test data in a CSV file (by default with columns separated by commas), with the first column acting as a header:
+
+---------------
+	NAME,AGE,PLACE OF BIRTH
+	Jack Smith, 30, Smithville
+	Joe Brown, 40, Brownville
+	Mary Williams, 20, Williamsville
+---------------
+
+Next, create a test class containing properties that match the columns in the test data. Each property should be a property by the JavaBeans definition, with a matching getter and setter. The test class will typically contain one or more tests that use these properties as parameters to the test step or Page Object methods.
+
+The class will also contain the *@UseTestDataFrom* annotation to indicate where to find the CSV file (this can either be a file on the classpath or a relative or absolute file path - putting the data set on the class path (e.g. in +src/test/resources+) makes the tests more portable). You also use the *@RunWith* annotation as well as the other usual Thucydides annotations (+@Managed+, +@ManagedPages+ and +@Steps+). 
+
+An example of such a class is shown here:
+
+[source,java]
+------------------   
+	@RunWith(ThucydidesParameterizedRunner.class)
+	@UseTestDataFrom("test-data/simple-data.csv")
+	public class SampleCSVDataDrivenScenario {
+
+	    private String name;
+	    private String age;
+	    private String placeOfBirth;
+
+	    public SampleCSVDataDrivenScenario() {
+	    }
+
+	    @Qualifier
+	    public String getQualifier() {
+	        return name;
+	    }
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+
+	    @Steps
+	    public SampleScenarioSteps steps;
+
+	    @Test
+	    public void data_driven_test() {
+	        System.out.println(getName() + "/" + getAge() + "/" + getCity());
+	    }
+
+	    public String getName() {
+	        return name;
+	    }
+
+	    public void setName(String name) {
+	        this.name = name;
+	    }
+
+	    public String getAge() {
+	        return age;
+	    }
+
+	    public void setAge(String age) {
+	        this.age = age;
+	    }
+
+	    public String getPlaceOfBirth() {
+	        return placeOfBirth;
+	    }
+
+	    public void setPlaceOfBirth(String placeOfBirth) {
+	        this.placeOfBirth = placeOfBirth;
+	    }
+	}
+---------
+
+Each row of test data needs to be distinguished in the generated reports. By default, Thucydides will call the +toString()+ method. If you provide a public method returning a String that is annotated by the +@Qualifier+ annotation, then this method will be used to distinguish data sets. It should return a value that is unique to each data set.
+
+The test runner will create a new instance of this class for each row of data in the CSV file, assigning the properties with corresponding values in the test data. SoWhen we run this test, we will get an output like this:
+
+---------------
+	Jack Smith/30/Smithville
+	Joe Brown/40/Brownville
+	Mary Williams/20/Williamsville
+---------------
+
+There are a few points to note. The columns in the CSV files are converted to camel-case property names (so "NAME" becomes +name+ and "PLACE OF BIRTH" becomes +placeOfBirth+). Since we are testing web applications, all of the fields should be strings.
+
+If some of the field values contain commas, you will need to use a different separator. You can use the *separator* attribute of the *@UseTestDataFrom* annotation to specify an alternative separator. For example, the following data uses a semi-colon separator:
+
+-----------
+    NAME;AGE;ADDRESS
+    Joe Smith; 30; 10 Main Street, Smithville
+    Jack Black; 40; 1 Main Street, Smithville
+    Mary Williams, 20, 2 Main Street, Williamsville
+------------
+
+To run our tests against this data, we would use a test class like the following:
+
+[source,java]
+------------------   
+	@RunWith(ThucydidesParameterizedRunner.class)
+	@UseTestDataFrom(value="test-data/simple-semicolon-data.csv", separator=';')
+	public class SampleCSVDataDrivenScenario {
+
+	    private String name;
+	    private String age;
+	    private String address;
+
+	    public SampleCSVDataDrivenScenario() {
+	    }
+
+	    @Qualifier
+	    public String getQualifier() {
+	        return name;
+	    }
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+
+	    @Steps
+	    public SampleScenarioSteps steps;
+
+	    @Test
+	    public void data_driven_test() {
+	        System.out.println(getName() + "/" + getAge() + "/" + getAddress());
+	    }
+
+	    public String getName() {
+	        return name;
+	    }
+
+	    public void setName(String name) {
+	        this.name = name;
+	    }
+
+	    public String getAge() {
+	        return age;
+	    }
+
+	    public void setAge(String age) {
+	        this.age = age;
+	    }
+
+	    public String getAddress() {
+	        return address;
+	    }
+
+	    public void setAddress(String address) {
+	        this.address = address;
+	    }
+	}
+------------
+
+This will generate an output like this:
+
+-------------
+	Joe Smith/30/10 Main Street, Smithville
+	Jack Black/40/1 Main Street, Smithville
+	Mary Williams/20/2 Main Street, Williamsville
+-------------
+
+Excel support will be added in a future version. However if you store your test data in CSV form, it becomes easier to keep track of changes to test data in your version control system.
+
+=== Using data-driven testing for individual steps
+
+Sometimes you want to use data-driven testing at the step level, rather than at the step level. For example, you might want to navigate to a particular screen in the application, and then try many combinations of data, or loop over a sequence of steps with data from a CSV file. This avoids having to reopen the browser for each row of data.
+
+You can do this by adding property values to your Step files. Consider the following steps file:
+
+[source,java]
+------------------   
+	public class SampleDataDrivenSteps extends ScenarioSteps {
+
+	    public SampleDataDrivenSteps(Pages pages) {
+	        super(pages);
+	    }
+
+	    private String name;
+	    private String age;
+	    private String address;
+
+	    public void setName(String name) {
+	        this.name = name;
+	    }
+
+	    public void setAge(String age) {
+	        this.age = age;
+	    }
+
+	    public void setAddress(String address) {
+	        this.address = address;
+	    }
+
+	    @StepGroup
+	    public void enter_new_user_details() {
+	        enter_name_and_age(name, age);
+	        enter_address(address);
+	    }
+
+	    @Step
+	    public void enter_address(String address) {
+	        ...
+	    }
+
+	    @Step
+	    public void enter_name_and_age(String name, String age) {
+	        ...
+	    }
+	
+		@Step
+		public void navigate_to_user_accounts_page() {
+			...
+		}
+	}
+--------------
+
+The +enter_personal_details+ step group uses the step fields to run the +enter_name_and_age+ and +enter_address steps+. We want to fetch this data from a CSV file, and loop through the *enter_personal_details* step for each row of data.
+
+We do this using the +withTestDataFrom()+ method of the *StepData* class:
+
+[source,java]
+------------------   
+	import net.thucydides.core.annotations.ManagedPages;
+	import net.thucydides.core.annotations.Steps;
+	import net.thucydides.core.pages.Pages;
+	import net.thucydides.junit.annotations.Managed;
+	import net.thucydides.junit.runners.ThucydidesRunner;
+	import org.junit.Test;
+	import org.junit.runner.RunWith;
+	import org.openqa.selenium.WebDriver;
+
+	import static net.thucydides.core.steps.StepData.withTestDataFrom;
+
+	@RunWith(ThucydidesRunner.class)
+	public class SamplePassingScenarioWithTestSpecificData {
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+    
+	    @Steps
+	    public SampleDataDrivenSteps steps;
+
+
+	    @Test
+	    public void happy_day_scenario() throws Throwable {
+			steps.navigate_to_user_accounts_page();
+	        withTestDataFrom("test-data/simple-data.csv").run(steps).enter_new_user_details();
+	    }
+	}
+--------------
+	
+This will call the +data_driven_test_step()+ multiple times, each time injecting data from the +test-data/simple-data.csv+ file into the step.
+
+You also can use as many data files as you want, even in the same test. You can also use the same data file for more than one test step. Remember only the properties that match columns in the CSV file will be instantiated - the others will be ignored:
+
+[source,java]
+------------------   
+	@RunWith(ThucydidesRunner.class)
+	public class SamplePassingScenarioWithTestSpecificData {
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+
+	    @Steps
+	    public SampleDataDrivenSteps steps;
+
+	    @Steps
+	    public DifferentDataDrivenSteps different_steps;
+
+
+	    @Test
+	    public void happy_day_scenario() throws Throwable {
+			steps.navigate_to_user_accounts_page();
+
+	        withTestDataFrom("test-data/simple-data.csv").run(steps).enter_new_user_details();
+
+	        withTestDataFrom("test-data/some_other-data.csv").run(different_steps).enter_other_details();
+	    }
+	}
+-------------------
+
+Note that, as a shortcut, you can dispense with the setter methods and just declare the relevant fields public. So the Steps class shown above could be rewritten like this:
+
+[source,java]
+------------------   
+	public class SampleDataDrivenSteps extends ScenarioSteps {
+
+	    public SampleDataDrivenSteps(Pages pages) {
+	        super(pages);
+	    }
+
+	    public String name;
+	    public String age;
+	    public String address;
+
+	    @StepGroup
+	    public void enter_new_user_details() {
+	        enter_name_and_age(name, age);
+	        enter_address(address);
+	    }
+
+	    @Step
+	    public void enter_address(String address) {
+	        ...
+	    }
+
+	    @Step
+	    public void enter_name_and_age(String name, String age) {
+	        ...
+	    }
+
+		@Step
+		public void navigate_to_user_accounts_page() {
+			...
+		}
+	}
+-------------------
+   
 == Running Thucydides tests in parallel batches
 
 Web tests make good candidates for concurrent testing, in theory at least, but the implementation can be tricky. For example, although it is easy enough to configure both JUnit and easyb to run tests in parallel, running several webdriver instances of Firefox in parallel on the same display, for example, tends to become unreliable.
