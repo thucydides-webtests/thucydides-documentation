@@ -1,7 +1,7 @@
 def srcFile = file('thucydides.doc')
 def srcImages = file("$projectDir/images")
 def srcFigures = file("$projectDir/figs")
-def destFile = file("$buildDir/thucydides.html")  
+def destFile = file("$buildDir/index.html")  
 def destImages = file("$buildDir/images")
 def destFigures = file("$buildDir/figs")
 
