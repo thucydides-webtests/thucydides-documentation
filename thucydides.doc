@@ -2127,7 +2127,7 @@ You can add both of these features to your Thucydides project by using the +thuc
     ...
 ------------------   
 
-Note that the JIRA workflow integration needs Groovy 1.8 or higher to work properly.
+Note that the JIRA workflow integration needs Groovy 1.8.5 or higher to work properly.
 
 You will also need an +slf4j+ implementation, e.g. ‘slf4j-log4j12′ (if you are using Log4j) or ‘logback-classic’ (if you are using LogBack) (see http://www.slf4j.org/codes.html#StaticLoggerBinder for more details). If you’re stuck, just add slf4j-simple:
 
@@ -2231,7 +2231,7 @@ dependencies:
     </dependency>
 ------------------   
 
-You also need to provide a username and password to connect to JIRA, and the URL where your Thucydides reports will be published (for example, on your CI server). You do using by passing in the jira.username, jira.password and thucydides.public.url system parameters.
+You also need to provide a username and password to connect to JIRA, and the URL where your Thucydides reports will be published (for example, on your CI server). You do using by passing in the *jira.username*, *jira.password*, *build.id* and *hucydides.public.url* system parameters. The *build.id* parameter identifies the current test run, and helps Thucydides know whether a given JIRA issue has already been updated by another test in the current test run. Thucydides lists all of the tests for a given JIRA card, along with their results, in the JIRA comment, and optionally updates the state of the JIRA issue accordingly (see below).
 
 [source,xml]
 ------------------   
@@ -2247,6 +2247,7 @@ You also need to provide a username and password to connect to JIRA, and the URL
                     <jira.url>http://jira.acme.com</jira.url>
                     <jira.username>${jira.demo.user}</jira.username>
                     <jira.password>${jira.demo.password}</jira.password>
+                    <build.id>${env.BUILD_ID}</build.id>
                     <thucydides.public.url>http://localhost:9000</thucydides.public.url>
                 </systemPropertyVariables>
             </configuration>
@@ -2293,7 +2294,6 @@ option, you need to set the +thucydides.jira.workflow.active+ option to ‘true�
 
 The default configuration will work with the default JIRA workflow: open or in progress issues associated with successful tests will be resolved, and closed or resolved issues associated with failing tests will be reopened. If you are using a customized workflow, or want to modify the way the transitions work, you can write your own workflow configuration. Workflow configuration uses a simple Groovy DSL. The following is an example of the configuration file used for the default workflow:
 
-[source,java]
 ------------------   
     when 'Open', {
         'success' should: 'Resolve Issue'
