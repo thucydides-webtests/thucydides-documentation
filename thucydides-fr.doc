@@ -1,0 +1,2926 @@
+= Thucydides: manuel de référence
+John Ferguson Smart
+v1.0.0, janvier 2012
+
+:author: John Ferguson Smart
+:data-uri:
+:doctype: book
+:toc:         
+:lang: fr 
+:encoding: utf-8
+
+[[preface-copyright]]
+[preface]
+== Copyright
+
+Copyright © 2011 John Ferguson Smart.
+
+Version en ligne publiée par Wakaleo Consulting.
+
+Ce travail est sous licence Creative Commons Attribution - Pas d’Utilisation
+Commerciale - Pas de Modification 3.0 United States Pour plus d'information sur
+cette licence, voir 
+http://creativecommons.org/licenses/by-nc-nd/3.0/fr/[creativecommons.org/licenses/by-nc-nd/3.0/fr/].
+
+Java™ et toutes les marques et logos basés sur Java sont des marques
+commerciales ou marques commerciales enregistrées de Sun Microsystems, Inc.,
+aux Etats-Unis et autres pays.
+
+Eclipse™ est une marque commerciale de Eclipse Foundation, Inc., aux Etats-Unis
+et autres pays.
+
+Apache et le logo plume Apache sont des marques commerciales de la Apache
+Software Foundation.
+
+Plusieurs des appellations utilisées par les fabricants et les vendeurs pour
+désigner leurs produits sont revendiqués comme marques commerciales. Quand ces
+appellations apparaissent dans ce livre, et quand Wakaleo Consulting était au
+fait de cette revendication de marque commerciale, les appellations ont été
+affichées en majuscules ou avec des initiales en majuscule.
+
+Bien que toutes les précautions ont été prises dans la préparation de ce livre,
+l'éditeur et les auteurs déclinent toute responsabilité pour les erreurs ou
+omissions, ou pour les dommages résultant de l'utilisation des informations
+fournies ci-après.
+
+[[introduction]]
+== Introduction à Thucydides
+
+Thucydides (Tou-sailledé-diz) est un outil conçu pour faciliter l'écriture des tests de recette et de non régression automatisés. Il offre des fonctionnalités pour faciliter l'organisation et la structuration de vos tests de recette en les reliant avec vos histoires utilisateur ou les fonctionnalités qu'ils testent. Quand les tests sont exécutés, Thucydides génère une documentation illustrée qui décrit comment l'application est utilisée en s'appuyant sur les histoires décrites par les tests.
+
+Thucydides apporte une prise en charge robuste des tests web automatisés utilisant Selenium 2, bien qu'il puisse être utilisé efficacement pour des tests non web.
+
+Thucydides était un historien grec connu pour ces analyses astucieuses et qui consignait rigoureusement les événements dont il était témoin ou auquel il participait lui-même. De la même manière, le framework Thucydides observe et analyse vos tests de recette et consigne de façon détaillée leur exécution.
+                
+[[basic-concepts]]
+== Concepts fondamentaux du test de recette et de non régression
+
+Pour tirer le meilleur parti de Thucydides, il est utile de comprendre quelques principes de base sous-jacents au développement dirigé par les tests de recette (Acceptance Test Driven Development). Thucydides est communément utilisé à la fois pour les tests de recette automatisés et les tests de non régression et les principes abordés ici s'appliquent aux deux, à quelques variations mineures près.
+
+Acceptance Test Driven Development, ou ATDD, est une forme avancée du développement dirigé par les tests (Test Driven Development ou TDD) dans lequel les critères de recette automatisés - définis en collaboration avec les utilisateurs - pilotent et orientent le processus de développement. Ceci aide à s'assurer que tout le monde comprend quelles sont les fonctionnalités en cours de développement.
+
+Un des points importants au sujet de l'ATDD est l'idée de la "Spécification par l'Exemple". Spécification par l'exemple fait référence à l'utilisation d'exemple relativement concrets pour illustrer comment un système doit fonctionner, par opposition à des spécifications écrites plus formellement.
+ 
+Prenons un exemple. Dans de nombreux projets, les exigences sont exprimées à l'aide de simples histoires telles que ce qui suit:
+      
+...................................
+De façon à obtenir de l'argent pour acheter une nouvelle voiture
+En tant que propriétaire d'une voiture
+Je veux vendre ma vieille voiture sur Internet
+...................................
+
+Si nous développons un site web de vente de voiture qui aide les gens à atteindre cet objectif, nous devrions typiquement définir une série de critères de recette pour donner corps à notre histoire. Par exemple, nous pourrions avoir les critères suivantes dans notre liste de critères de recette:
+
+- Le propriétaire de voiture peut publier une annonce de vente en ligne standard
+- Le propriétaire de voiture peut publier une annonce de vente en ligne premium
+- L'annonce voiture peut afficher la marque, le modèle et l'année de la voiture
+
+et ainsi de suite.
+ 
+Un testeur planifiant les tests pour ces critères de recette peut concevoir un plan de tests décrivant la façon dont il entend tester ces critères de recette.  Pour le premier critère, il peut commencer par un plan de haut niveau tel que ce qui suit:
+                                     
+  * Aller à la section des annonces voiture et choisir de poster une annonce voiture standard
+  * Saisir les informations relatives à la voiture
+  * Choisir les options de publication
+  * Prévisualiser l'annonce
+  * Saisir les informations de paiement
+  * Visualiser la confirmation de l'annonce
+
+Chacune de ces étapes peut nécessiter d'être décomposée en étapes plus fines.
+
+ * 'Saisir les informations relatives à la voiture'
+	** Saisir le fabriquant, le modèle et l'année de la voiture
+	** Choisir les options
+	** Ajouter des photos
+	** Saisir une description
+
+Ces étapes sont souvent étoffées avec plus de détails concrets:
+
+ * 'Saisir les informations relatives à la voiture'
+	** Créer une annonce pour une Mitsubishi Pajero de 2006
+	** Ajouter Air conditionné et lecteur CD
+	** Ajouter trois photos
+	** Saisir une description
+		          
+Selon nos objectifs, les tests de non régression peuvent être définis comme des tests de bout en bout qui assurent que l'application se comporte comme attendu et qui continuera à se comporter comme attendu dans les prochaines livraisons. Autant les tests de recette sont définis très tôt dans le processus, avant le début du développement, autant les tests de non régression implique l'existence du système. A par cela, les étapes nécessaires à la définition et à l'automatisation des tests sont très semblables.
+
+Maintenant différentes parties prenantes du projet seront impliquées à différents niveaux de détail. Certains, tels que les gestionnaires de projet et les gestionnaires en général, ne seront intéressés que par les fonctionnalités qui fonctionnent et par celles qui doivent être réalisées. D'autres, tels que les analystes métier et les qualiticiens, seront intéressés par la façon détaillées dont les scénarios de recette sont implémentés, éventuellement allant jusqu'aux écrans.
+
+Thucydides vous aide à structurer vos tests de recette automatisés en étapes et sous-étapes comme illustré ci-dessous. Ceci a tendance à rendre les tests plus clairs, plus flexibles et plus facile à maintenir. De plus, quand les tests sont exécutés, Thucydides produit des rapports illustrés en style narratif comme dans <fig-test-report>>. 
+
+[[fig-test-report]]
+.Un rapport de test généré par Thucydides
+image::figs/test-report.png[scaledwidth="80%", width=800]
+
+Quand vient le moment d'implémenter les tests eux-même, Thucydides apporte également de nombreuses fonctionnalités pour rendre ceci plus facile, plus rapide et plus propre de façon à écrire des tests clairs et maintenables. Ceci est particulièrement vrai pour les tests web automatisés utilisant Selenium 2, mais Thucydides répond aussi bien aux besoins des tests non-web. Thucydides fonctionne actuellement avec JUnit et easyb - l'intégration avec d'autres framework BDD est en cours.
+
+== Débuter avec Thucydides
+
+=== Créer un nouveau projet Thucydides
+
+
+La façon la plus simple de démarrer un nouveau projet Thucydides est d'utiliser l'archétype Maven. Deux archétypes ont actuellement disponibles: un pour utiliser Thucydides avec JUnit, et l'autre si vous voulez également écrire vos tests de recette (ou une partie d'entre eux) en utilisant http://www.easyb.org/[easyb]. Dans cette section, nous créerons un nouveau projet Thucydides en utilisant l'archétype Thucydides, puis nous aborderons les fonctionnalités essentielles de ce projet.
+
+En ligne de commandes, vous pouvez exécuter mvn archetype:generate puis choisir l'archétype net.thucydides.thucydides-easyb-archetype dans la liste des archétypes proposés. Ou bien, vous pouvez utiliser votre IDE préféré pour générer un nouveau projet Maven en utilisant un archétype.
+
+---------------------------
+$ mvn archetype:generate
+...
+Define value for property 'groupId': : com.mycompany
+Define value for property 'artifactId': : webtests
+Define value for property 'version':  1.0-SNAPSHOT: :
+Define value for property 'package':  com.mycompany: :
+Confirm properties configuration:
+groupId: com.mycompany
+artifactId: webtests
+version: 1.0-SNAPSHOT
+package: com.mycompany
+ Y: :
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2:33.290s
+[INFO] Finished at: Fri Oct 28 07:20:41 NZDT 2011
+[INFO] Final Memory: 7M/81M
+[INFO] ------------------------------------------------------------------------
+---------------------------
+
+Ceci va créer un projet Thucydides simple complété d'un objet page, d'une bibliothèque d'étapes et de deux cas de tests, l'un utilisant JUnit et l'autre easyb. Les tests effectifs sont exécutés sur le dictionnaire en ligne Wiktionary.org. Avant d'aller plus loin, faisons un tour dans notre projet.  Mais avant, nous devons ajouter +net.thucydides.maven.plugins+ à nos groupes de plugin dans notre fichier +settings.xml+:
+
+[source,xml]
+---------------------------
+<settings>
+   <pluginGroups>
+       <pluginGroup>net.thucydides.maven.plugins</pluginGroup>
+       ...
+      </pluginGroups>
+  ...
+</settings>
+---------------------------
+
+Ceci va nous permettre d'appeler le plugin Maven thucydides à partir de la ligne de commande avec la forme abrégée montrée ici. Maintenant, allons dans le répertoire généré pour notre projet, lançons les tests et générons le rapport:
+
+---------------------------
+$ mvn test thucydides:aggregate
+---------------------------
+
+Ceci doit lancer des tests web et générer un rapport dans le répertoire +target/site/thucydides+ (ouvrez le fichier +index.html+). Vous devriez voir un rapport tel que celui-ci <<fig-aggregate-report>>.
+
+[[fig-aggregate-report]]
+.Un rapport global généré par Thucydides
+image::figs/aggregate-report.png[scaledwidth="80%", width=800]
+
+Si vous entrez dans les rapports de tests individuels, vous verrez un récit illustré pour chaque test comme celui montré ici <<fig-test-report>>
+
+Maintenant les détails. La structure projet est montrée ici:
+
+--------------------------
++ src
+   + main
+      + java
+         + com.mycompany.pages
+            - HomePage.java   
+
+   + test
+      + java
+         + com.mycompany.pages
+            + requirements
+               - Application.java
+            + steps
+               - EndUserSteps.java
+            - LookupADefinitionStoryTest.java 
+
+      + stories
+         + com.mycompany
+            - LookupADefinition.story
+--------------------------
+
+Ce projet est conçu pour fournir un point de départ à vos tests de recette Thucydides et pour illustrer certaines des fonctionnalités de base. Les tests sont fournis dans deux styles: 'easyb' et 'JUnit'. easyb est une bibliothèque BDD (Behaviour Driven Development) reposant sur Groovy qui fonctionne bien pour ce type de tests. L'histoire exemple easyb se trouve dans le fichier +LookupADefinition.story+ et ressemble à quelque chose comme ça:
+
+[source,java]
+------------------
+using "thucydides"
+
+thucydides.uses_default_base_url "http://en.wiktionary.org/wiki/Wiktionary:Main_Page"
+thucydides.uses_steps_from EndUserSteps
+thucydides.tests_story SearchByKeyword
+
+scenario "Looking up the definition of 'apple'", {
+    given "the user is on the Wikionary home page", {
+        end_user.is_the_home_page()
+    }
+    when "the end user looks up the definition of the word 'apple'", {
+        end_user.looks_for "apple"
+    }
+    then "they should see the definition of 'apple", {
+       end_user.should_see_definition_containing_words "A common, round fruit"
+    }
+}
+-------------------
+
+Un coup d'oeil rapide à cette histoire montre qu'elle se rapporte à un utilisateur cherchant la définition du mot 'apple'. Seul le "quoi" est exprimé à ce niveau - les détails sont masqués dans les étapes du test, voire plus profondément, dans les objets page.
+
+Si vous préférez des tests en pur Java, l'équivalent JUnit se trouve dans le fichier +LookupADefinitionStoryTest.java+:
+
+[source,java]
+----------------------
+@Story(Application.Search.SearchByKeyword.class)
+@RunWith(ThucydidesRunner.class)
+public class LookupADefinitionStoryTest {
+
+    @Managed(uniqueSession = true)
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+    public Pages pages;
+
+    @Steps
+    public EndUserSteps endUser;
+
+    @Issue("#WIKI-1")
+    @Test
+    public void looking_up_the_definition_of_apple_should_display_the_corresponding_article() {
+        endUser.is_the_home_page();
+		endUser.looks_for("apple");
+        endUser.should_see_definition_containing_words("A common, round fruit");
+
+    }
+}
+----------------------
+Comme vous pouvez le voir, c'est un petit peu plus technique mais cela reste à très haut niveau.
+
+Les bibliothèques d'étapes contiennent l'implémentation de chacune des étapes utilisées dans les tests de haut niveau. Pour des tests complexes, ces étapes peuvent à leur tour faire appel à d'autres étapes. La bibliothèque d'étapes utilisée dans cet exemple peut être trouvée dans +EndUserSteps.java+:
+
+[source,java]
+----------------------  
+public class EndUserSteps extends ScenarioSteps {
+
+	public EndUserSteps(Pages pages) {
+		super(pages);
+	}
+
+    @Step
+    public void searches_by_keyword(String keyword) {
+        enters(keyword);
+        performs_search();
+    }
+
+	@Step
+	public void enters(String keyword) {
+        onHomePage().enter_keywords(keyword);
+	}
+
+    @Step
+    public void performs_search() {
+        onHomePage().starts_search();
+    }
+
+    private HomePage onHomePage() {
+        return getPages().currentPageAt(HomePage.class);
+    }
+
+    @Step
+	public void should_see_article_with_title(String title) {
+        assertThat(onHomePage().getTitle(), is(title));
+	}
+
+    @Step
+    public void is_on_the_wikipedia_home_page() {
+        onHomePage().open();
+    }
+}   
+----------------------  
+
+Les objets Page sont un moyen d'encapsuler les détails d'implémentation d'une page donnée. Selenium 2 possède un particulièrement bon support pour les objets page et ThucydidesRunner en tire parti. L'objet page d'exemple se trouve dans la classe HomePage.java class:
+
+[source,java]
+----------------------  
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class SearchPage extends PageObject {
+
+    @FindBy(name="search")
+	private WebElement searchInput;
+	
+	@FindBy(name="go")
+	private WebElement searchButton;
+	
+	public SearchPage(WebDriver driver) {
+		super(driver);
+	}
+
+	public void enter_keywords(String keyword) {
+		searchInput.sendKeys(keyword);
+	}
+
+    public void starts_search() {
+        searchButton.click();
+    }
+
+    public List<String> getDefinitions() {
+        WebElement definitionList = getDriver().findElement(By.tagName("ol"));
+        List<WebElement> results = definitionList.findElements(By.tagName("li"));
+        return convert(results, new ExtractDefinition());
+    }
+
+    class ExtractDefinition implements Converter<WebElement, String> {
+        public String convert(WebElement from) {
+            return from.getText();
+        }
+    }
+}
+----------------------  
+
+La pièce finale du puzzle est la classe +Application.java+ qui est un moyen de représenter la structure de vos exigences sous forme Java de telle sorte que vos tests easyb et JUnit puissent être reliés aux exigences qu'ils testent:
+
+[source,java]
+----------------------  
+	public class Application {
+	    @Feature
+	    public class Search {
+	        public class SearchByKeyword {}
+	        public class SearchByAnimalRelatedKeyword {}
+	        public class SearchByFoodRelatedKeyword {}
+	        public class SearchByMultipleKeywords {}
+	        public class SearchForQuote{}
+	    }
+
+	    @Feature
+	    public class Backend {
+	        public class ProcessSales {}
+	        public class ProcessSubscriptions {}
+	    }
+
+	    @Feature
+	    public class Contribute {
+	        public class AddNewArticle {}
+	        public class EditExistingArticle {}
+	    }
+	}
+----------------------  
+
+C'est ce qui permet à Thucydides de générer un rapport global concernant les fonctionnalités et les histoires.
+
+Dans les sections suivantes, nous verrons plus en détail les différents aspects de l'écriture des tests automatiques avec Thucydides.
+ 
+== Ecrire des tests de recette avec Thucydides
+
+Dans cette section, nous examinons plus en détail les choses dont nous avons besoin pour écrire nos tests de recette ou de non régression en utilisant Thucydides. Nous allons également présenter une approche générale pour écrire des tests de recette web qui a bien fonctionné pour nous par le passé.
+
+. Définir et organiser les exigences ou les histoires utilisateur que vous avez besoin de tester
+. Ecrire des tests haut niveau en attente pour les critères de recette
+. Choisir un test à implémenter et le casser en petites étapes de haut niveau (typiquement entre 3 et 7)
+. Implémenter ces étapes, soit en les divisant en d'autres étapes, soit en accédant à des objets page.
+. Implémenter toutes les méthodes d'objet Page que vous avez découvertes.
+
+           
+[NOTE]
+=====================================================================
+Ces étapes ne doivent pas être vues comme une approche linéaire ou en cascade.  En effet, le processus est habituellement assez incrémental avec des exigences ajoutées à la classe Application quand elles sont nécessaires, et des tests en attente utilisés pour définir les tests avant qu'ils ne soient complétés.
+=====================================================================
+
+=== Organiser vos exigences
+ 
+Pour tirer le meilleur de vos tests automatisés dans Thucydides, vous devez dire à Thucydides quelles fonctionnalités de votre application vous testez dans chaque test. Bien que cette étape soit facultative, elle est fortement recommandée.
+
+La version actuelle de Thucydides utilise une organisation simple à trois niveaux pour structurer les tests de recette en morceaux plus facilement gérables. Au plus haut niveau, une application est divisée en 'fonctionnalités' ('feature'), qui est une fonction de haut niveau ou un groupe de fonctions en rapport. Une fonctionnalité contient un certain nombre d'histoires ('stories', correspondant aux histoires utilisateur, cas d'utilisation, etc.). Chaque histoire est validée par un certain nombre d'exemples, ou critères d'acceptation, qui sont automatisés sous forme de tests web (parfois appelés scénarios). Chaque test, à son tour, est implémenté en utilisant un certain nombre d'étapes.
+
+Bien sûr cette structure et ces termes sont principalement des commodités pour permettre une vision haut niveau de vos tests de recette. Cependant, ce type d'abstraction à 3 niveaux semble être assez commune.
+
+Dans la version actuelle de Thucydides, vous définissez cette structure à l'intérieur du code de test sous forme de classes Java (très légères) footnote:[Les futures versions de Thucydides offriront d'autres façons de définir vos exigences utilisateur.]. Ceci facilite la refactorisation et le renommage des histoires utilisateur et des fonctionnalités à l'intérieur des tests, et donne un point de référence central dans la suite de tests illustrant quelles fonctionnalités sont en cours de test. Un exemple simple est donné ici. La classe Application est simplement un moyen pratique de regrouper dans un seul fichier les fonctionnalités et les histoires utilisateur. Les fonctionnalités sont repérées avec l'annotation @Feature. Les histoires utilisateur sont déclarées sous forme de classes internes à l'intérieur d'une classe @Feature.
+
+[source,java]
+--------------------------
+public class Application {
+
+    @Feature
+    public class ManageCompanies {
+        public class AddNewCompany {}
+        public class DeleteCompany {}
+        public class ListCompanies {}
+    }
+
+    @Feature
+    public class ManageCategories {
+        public class AddNewCategory {}
+        public class ListCategories {}
+        public class DeleteCategory {}
+    }
+
+    @Feature
+    public class ManageTags {
+        public class DisplayTagCloud {}
+    }
+
+    @Feature
+    public class ManageJobs {}
+
+    @Feature
+    public class BrowseJobs {
+        public class UserLookForJobs {}
+        public class UserBrowsesJobTabs {}
+    }
+} 
+--------------------------
+
+== Définir des tests de haut niveau
+
+Il y a deux approches pour automatiser les tests de recette ou de non régression avec Thucydides. Les deux impliquent d'implémenter les tests sous forme d'une séquence d'étapes de très haut niveau puis d'implémenter ces étapes en descendant dans les détails jusqu'à atteindre les objets page. La différence réside dans le langage utilisé pour implémenter les tests de haut niveau. Des outils tels que easyb se concentrent davantage sur la communication avec les non-développeurs et permet aux tests de haut niveau d'être exprimés plus facilement en termes métier. D'un autre côté, les développeurs trouvent souvent plus confortable de travailler directement avec JUnit, aussi, si la communication avec les parties prenantes non techniciens n'est pas une priorité de premier ordre, ceci peut constituer une option préférée.
+
+Dans la version actuelle de Thucydides, vous pouvez écrire vos tests en utilisant easyb (pour une approche davantage style BDD) ou en JUnit en utilisant Java ou un autre langage JVM (Groovy est un choix populaire).  D'autres outils BDD seront gérés dans de futures versions. Nous aborderons les deux ici, mais vous pouvez utiliser celle avec laquelle vous et votre équipe êtes le plus à l'aise.
+
+=== Définir des tests haut niveau en easyb
+
+Easyb (http://easyb.org) est un outil BDD basé sur Groovy. Il facilite l'écriture d'histoires et de scénarios légers en utilisant la structuration classique du style BDD "given-when-then" ("étant donné-lorsque-alors") et en les implémentant en Groovy. Le plugin easyb de Thucydides est conçu pour faciliter l'écriture des tests Thucydides en utilisant easyb.
+                     
+==== Ecrire une histoire easyb en attente
+
+Avec easyb, vous écrivez des tests (appelés "scenarios") qui, lorsqu'on utilise Thucydides, correspondent aux critères de recette automatisée. Les tests sont groupés en "histoires" ou "stories" - chaque histoire possède son propre fichier.
+
+Les scénarios sont d'abord écrits comme "pending" (en attente). Ce sont juste des aperçus haut niveau, décrivant un ensemble de critères d'acceptation pour une histoire donnée et selon la structuration "given-when-then".
+
+Quand les tests sont exécutés, les scénarios en attente sont ignorés. Cependant, ils apparaissent dans les rapports, de telle sorte que vous savez quelles fonctionnalités doivent encore être implémentées. Un exemple de la façon dont les scénarios en attente apparaissent dans un rapport Thucydides figure dans <fig-story-results-pending>>.
+
+[[fig-story-results-pending]]
+.Les tests en attente sont affichés avec l'icone 'calendrier'
+image::figs/story-results-pending.png[scaledwidth="80%", width=800]
+
+Voici un exemple d'histoire easyb en attente en utilisant Thucydides:
+  
+[source,java]
+----------------------
+using "thucydides"
+
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+
+thucydides.tests_story AddNewCategory
+
+scenario "The administrator adds a new category to the system",
+{
+        given "a new category needs to be added to the system"
+        when "the administrator adds a new category"
+        then "the system should confirm that the category has been created"
+        and "the new category should be visible to job seekers"
+}
+
+scenario "The administrator adds a category with an existing code to the system",
+{
+        given "the administrator is on the categories list page"
+        when "the user adds a new category with an existing code"
+        then "an error message should be displayed"
+}  
+----------------------
+
+Examinons cette histoire partie par partie. D'abord, vous devez déclarer que vous utilisez Thucydides. Vous faîtes cela en utilisant le mot clef easyb:
+
+[source,java]
+----------------------
+using "thucydides"
+----------------------
+
+Ceci va, entre autres choses, injecter l'objet +thucydides+ dans le contexte de votre histoire de telle sorte que vous pouvez configurer Thucydides pour exécuter votre histoire correctement.
+
+Ensuite, vous devez dire à Thucydides quelle histoire vous être en train de tester. Vous faîtes cela en référençant l'une des classes d'histoire définies précédemment. C'est ce que nous faisons ici:
+
+[source,java]
+----------------------
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+
+thucydides.tests_story AddNewCategory
+----------------------
+
+Le reste de l'histoire easyb est juste une série de scénarios en attente easyb habituels. Pour le moment, il n'y a aucune implémentation de telle sorte qu'ils appairaissent en attente ("pending") dans les rapports:
+
+[source,java]
+----------------------
+scenario "The administrator adds a new category to the system",
+{
+        given "a new category needs to be added to the system"
+        when "the administrator adds a new category"
+        then "the system should confirm that the category has been created"
+        and "the new category should be visible to job seekers"
+}
+
+scenario "The administrator adds a category with an existing code to the system",
+{
+        given "the administrator is on the categories list page"
+        when "the user adds a new category with an existing code"
+        then "an error message should be displayed"
+}
+----------------------
+
+Typiquement, vous déclarez de nombreuses histoires en attente, de préférence en collaboration avec le propriétaire du produit ou les analystes métier au début d'une itération. Ceci vous donne une bonne idée de quelles histoires doivent être implémentées dans une itération donnée ainsi qu'une idée de la complexité relative de chaque histoire.
+
+==== Implémenter des histoires easyb
+ 
+L'étape suivante consiste à implémenter vos histoires. Voyons une version implémentée du premier de ces scénarios:
+
+[source,java]
+----------------------
+using "thucydides"
+
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+import net.thucydides.demos.jobboard.steps.AdministratorSteps
+import net.thucydides.demos.jobboard.steps.JobSeekerSteps
+
+thucydides.uses_default_base_url "http://localhost:9000" 
+thucydides.uses_steps_from AdministratorSteps
+thucydides.uses_steps_from JobSeekerSteps
+thucydides.tests_story AddNewCategory
+
+def cleanup_database() {
+    administrator.deletes_category("Scala Developers");
+}
+
+scenario "The administrator adds a new category to the system",
+{
+    given "a new category needs to be added to the system", 
+    {
+      administrator.logs_in_to_admin_page_if_first_time()
+      administrator.opens_categories_list()
+    }
+    when "the administrator adds a new category", 
+    {
+       administrator.selects_add_category()
+       administrator.adds_new_category("Scala Developers","SCALA")
+    }
+    then "the system should confirm that the category has been created", 
+    {
+        administrator.should_see_confirmation_message "The Category has been created"
+    }
+    and "the new category should be visible to job seekers", 
+    {
+        job_seeker.opens_jobs_page()
+        job_seeker.should_see_job_category "Scala Developers" 
+    }
+}
+----------------------
+
+De nouveau, décomposons ceci. Dans la première partie, nous importons les classes que nous avons besoin d'utiliser:
+
+[source,java]
+----------------------
+using "thucydides"
+
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+import net.thucydides.demos.jobboard.steps.AdministratorSteps
+import net.thucydides.demos.jobboard.steps.JobSeekerSteps
+----------------------
+
+Ensuite, nous déclarons l'URL de base par défaut à utiliser pour les tests. Comme l'annotation équivalante dans les tests JUnit, celle-ci est utilisé pour les tests exécutés depuis l'IDE ou si aucune URL de base n'est définie en ligne de commande en utilisant le paramètre +webdriver.base.url+.
+
+[source,java]
+---------------------
+thucydides.uses_default_base_url "http://localhost:9000"
+---------------------
+
+Nous avons également besoin de déclarer les bibliothèques d'étapes de test que nous allons utiliser. Nous le faisons en utilisant thucydides.uses_steps_from.  Ceci va injecter une variable d'instance dans le contexte easyb pour chaque bibliothèque d'étape déclarée. Si le nom de classe de la bibliothèque d'étape finit en 'Steps' (par exemple JobSeekerSteps), le nom de la variable sera le nom de la classe moins le suffixe 'Steps', converti en minuscules et sous-lignés (ex.  "job_seeker"). Nous en apprendrons davantage sur l'implémentation des bibliothèques d'étapes plus loin.
+
+[source,java]
+---------------------
+thucydides.uses_steps_from AdministratorSteps
+thucydides.uses_steps_from JobSeekerSteps
+thucydides.tests_story AddNewCategory
+---------------------
+
+Enfin, nous implémentons le scénario. Notez que, puisqu'il s'agit de Groovy, nous pouvons déclarer des méthodes d'outillage pour faciliter la préparation et le nettoyage de l'environnement de test selon les besoins:
+
+[source,java]
+---------------------
+def cleanup_database() {
+    administrator.deletes_category("Scala Developers");
+}
+---------------------
+
+Habituellement, l'implémentation invoque seulement des méthodes d'étape, comme illustré ici:
+
+[source,java]
+---------------------
+scenario "The administrator adds a new category to the system",
+{
+    given "a new category needs to be added to the system",
+    {
+      administrator.logs_in_to_admin_page_if_first_time()
+      administrator.opens_categories_list()
+    }
+    when "the administrator adds a new category",
+    {
+       administrator.selects_add_category()
+       administrator.adds_new_category("Scala Developers","SCALA")
+    }
+    then "the system should confirm that the category has been created",
+    {
+        administrator.should_see_confirmation_message "The Category has been created"
+    }
+    and "the new category should be visible to job seekers",
+    {
+        job_seeker.opens_jobs_page()
+        job_seeker.should_see_job_category "Scala Developers"
+        cleanup_database()
+    }
+}   
+---------------------
+
+[NOTE]
+=====================================================================
+Si vous utilisez easyb avec Maven 3, il y a un bug Maven (Aether, pour être précis) qui peut se traduire par une erreur comme dans les lignes suivantes:
+ 
+-------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 8.171s
+[INFO] Finished at: Fri Jul 08 15:33:03 EST 2011
+[INFO] Final Memory: 5M/81M
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal on project jobboard-webtests: Could not resolve dependencies for project net.thucydides.demos:jobboard-webtests:jar:1.0.0-SNAPSHOT: The following artifacts could not be resolved: commons-lang:commons-lang:jar:2.5, ant:ant:jar:1.6.5: Could not find artifact commons-lang:commons-lang:jar:2.5 -> [Help 1]
+-------------------
+
+Ce problème a été corrigé dans Maven 3.0.4.
+=====================================================================
+
+=== Définir de tests de haut niveau avec JUnit
+ 
+Thucydides s'intègre facilement avec les tests JUnit 4 ordinaires en utilisant le lanceur de tests ThucydidesRunner et quelques annotations spécialisées. C'est une des manières les plus simples pour commencer avec Thucydides, et cela est très bien adapté aux tests de non régression où la communication et les clarifications avec les différentes parties prenantes n'est pas une exigence.
+
+Voici un exemple de test web JUnit Thucydides:
+
+[source,java]
+-------------------
+@RunWith(ThucydidesRunner.class)
+@Story(UserLookForJobs.class)
+public class LookForJobsStory {
+
+    @Managed
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://localhost:9000")
+    public Pages pages;
+
+    @Steps
+    public JobSeekerSteps job_seeker;
+
+    @Test
+    public void user_looks_for_jobs_by_key_word() {
+        job_seeker.opens_jobs_page();
+        job_seeker.searches_for_jobs_using("Java");
+        job_seeker.should_see_message("No jobs found.");
+    }
+
+    @Test
+    public void when_no_matching_job_found_should_display_error_message() {
+        job_seeker.opens_jobs_page();
+        job_seeker.searches_for_jobs_using("unknownJobCriteria");
+        job_seeker.should_see_message("No jobs found.");
+    }
+
+    @Pending @Test
+    public void tags_should_be_displayed_to_help_the_user_find_jobs() {}
+
+    @Pending @Test
+    public void the_user_can_list_all_of_the_jobs_for_a_given_tag() {}
+
+    @Pending @Test
+    public void the_user_can_see_the_total_number_of_jobs_on_offer() {}
+
+}
+-------------------
+
+Examinons ceci section par section. La classe commence par l'annotation @RunWith pour indiquer qu'il s'agit d'un test Thucydides. Nous utilisons également l'annotation @Story pour indiquer quelle histoire utilisateur est testée (définie comme des classes imbriquées des classes @Feature vues plus haut). Ceci est utilisé pour générer des rapports globaux.
+
+[source,java]
+-------------------
+@RunWith(ThucydidesRunner.class)
+@Story(UserLookForJobs.class)
+public class LookForJobsStory {
+    ...
+-------------------
+
+Ensuite arrivent deux annotations essentielles pour tous les tests web. Tout d'abord, votre cas de test a besoin d'un champ public +Webdriver+ annoté avec +@Managed+. Ceci permet à Thucydides de prendre soin pour vous de l'ouverture et de la fermeture du pilote WebDriver et d'utiliser ce pilote dans les pages et les étapes de test quand les tests sont exécutés:
+
+[source,java]
+-------------------
+    @Managed
+    public WebDriver webdriver;    
+-------------------
+
+Le second champ essentiel est une instance de la classe +Pages+, annotée avec +@ManagedPages+. Ceci est principalement une fabrique de page que Thucydides utilise pour vous fournir des objets page instanciés. L'attribut +defaultUrl+ vous permet de définir une URL à utiliser à l'ouverture de vos pages si aucune autre URL de base n'a été définie. Ceci est utile pour les tests dans l'IDE:
+
+[source,java]
+-------------------
+    @ManagedPages(defaultUrl = "http://localhost:9000")
+    public Pages pages;
+-------------------
+  
+Notez que ces annotations ne sont nécessaires que pour les tests web. Si votre test Thucydides n'utilise pas de tests web, vous pouvez les ignorez en toute sérénité.
+
+Pour des tests haut niveau de recette ou de non régression, c'est une bonne habitude de définir les tests de haut niveau comme une suite d'étapes de haut niveau. Cela rendra vos tests plus lisibles et plus faciles à maintenir si vous déléguez les détails d'implémentation de votre test (le "comment") à des méthodes réutilisables d'étape. Nous verrons comment définir ces méthodes d'étape plus tard. Cependant, vous devez au minimum définir la classe dans laquelle les étapes seront définies, en utilisant l'annotation @Steps. Cette annotation indique à Thucydides d'être à l'écoute des appels de méthodes de cet objet et (pour les tests web) d'injecter l'instance WebDriver et la fabrique de page dans la classe Steps de telle sorte qu'elles puissent être utilisées dans les méthodes d'étapes.
+
+[source,java]
+-------------------
+    @Steps
+    public JobSeekerSteps job_seeker;
+-------------------
+
+==== Tests en attente
+
+Les tests qui ne contiennent aucune étape sont considérés comme étant en attente ('pending'). Vous pouvez également forcer une étape à être ignorée (et signalée comme étant en attente) en utilisant l'annotation +@Pending+ ou l'annotation +@Ignore+. Noter que le sens est légèrement différent: +@Ignore+ indique que vous avez temporairement suspendu l'exécution d'un test tandis que +@Pending+ signifie que le test a été spécifié mais pas encore implémenté. Ainsi, les deux tests suivants seront en attente:
+
+[source,java]
+-------------------
+@Test
+public void administrator_adds_an_existing_company_to_the_system() {}
+
+@Pending @Test
+public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
+    steps.login_to_admin_page();
+    steps.open_companies_list();
+    steps.select_add_company();
+    // More to come        
+}
+-------------------
+
+Un test sera également considéré comme étant en attente si au moins l'une des étapes utilisée dans ce test est en attente. Pour qu'une étape soit en attente, elle doit être annotée avec +@Pending+.
+
+==== Exécuter des tests dans une unique session du navigateur
+
+Normalement, Thucydides ouvre une session du navigateur pour chaque test. Ceci aide à assurer que chaque test est isolé et indépendant. Cependant, parfois, il est utile d'être capable d'exécuter des tests dans une même session du navigateur, en particulier pour des raisons de performance sur des écrans en lecture seule. Vous pouvez faire cela en utilisant l'attribut 'uniqueSession' de l'annotation @Managed comme montré ci-dessous. Dans ce cas, le navigateur va s'ouvrir au début du cas de test et ne se fermera pas tant que tous les tests n'auront pas été exécutés.
+ 
+[source,java]
+----------------
+@RunWith(ThucydidesRunner.class)
+public class OpenStaticDemoPageSample {
+
+    @Managed(uniqueSession=true)
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "classpath:static-site/index.html")
+    public Pages pages;
+
+    @Steps
+    public DemoSiteSteps steps;
+
+    @Test
+    @Title("The user opens the index page")
+    public void the_user_opens_the_page() {
+        steps.should_display("A visible title");
+    }    
+
+    @Test
+    @Title("The user selects a value")
+    public void the_user_selects_a_value() {
+        steps.enter_values("Label 2", true);
+        steps.should_have_selected_value("2");
+    }
+
+    @Test
+    @Title("The user enters different values.")
+    public void the_user_opens_another_page() {
+        steps.enter_values("Label 3", true);
+        steps.do_something();
+        steps.should_have_selected_value("3");
+    }
+}
+----------------
+
+Si vous n'avez pas besoin de la gestion de WebDriver dans vos tests, vous pouvez omettre les annotations +@Managed+ et +@Pages+, par exemple:
+
+[source,java]
+----------------
+@RunWith(ThucydidesRunner.class)
+@Story(Application.Backend.ProcessSales.class)
+public class WorkWithBackendTest {
+
+    @Steps
+    public BackendSteps backend;
+
+    @Test
+    public void when_processing_a_sale_transation() {
+        backend.accepts_a_sale_transaction();
+        backend.should_the_update_mainframe();
+    }
+}
+----------------             
+
+=== Exécuter Thucydides dans différents navigateurs
+
+Thucydides gère tous les pilotes WebDriver de navigateurs, i.e. Firefox, Internet Explorer et Chrome ainsi que HTMLUnit. Par défaut, il utilisera Firefox. Cependant, vous pouvez passer outre cette option en utilisant la propriété système +webdriver.driver+. Pour l'utiliser en ligne de commandes, vous pouvez procéder comme suit:
+
+-------------------
+$ mvn test -Dwebdriver.driver=iexplorer
+-------------------
+
+Si vous n'utilisez pas Firefox par défaut, il vous sera utile de définir cette variable en tant que propriété dans votre fichier Maven pom.xml, par exemple:
+
+[source,xml]
+-------------------
+<properties>
+    <webdriver.driver>iexplorer</webdriver.driver>
+</properties> 
+-------------------
+
+Cependant, pour que ceci fonctionne avec JUnit, vous devez passer cette propriété webdriver.driver à JUnit. JUnit s'exécute dans une JVM dédiée et n'aura donc pas connaissance des propriétés système définies dans le build Maven. Pour y remédier, vous devez la passer explicitement à JUnit en utilisant l'option de configuration systemPropertyVariables, par exemple:
+
+[source,xml]
+-------------------
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.7.1</version>
+            <configuration>
+                <systemPropertyVariables>
+                    <webdriver.driver>${webdriver.driver}</webdriver.driver>
+                </systemPropertyVariables>
+            </configuration>
+        </plugin> 
+-------------------
+
+=== Forcer l'utilisation d'un pilote spécifique dans un cas de test ou dans un test
+
+L'annotation +@Managed+ vous permet également d'indiquer le pilote que vous voulez utiliser pour un cas de test particulier, via l'attribut +driver+. Les valeurs gérées actuellement sont "firefox", "iexplorer", "chrome" et "htmlunit". L'attribut +driver+ vous permet de surcharger le pilote par défaut du système pour des exigences spécifiques. Par exemple, le cas de test suivant s'exécutera sous Chrome, quelle que soit la valeur de la propriété système +webdriver.driver+ utilisée:
+ 
+[source,java]
+-----------------
+@RunWith(ThucydidesRunner.class)
+@Story(Application.Search.SearchByKeyword.class)
+public class SearchByFoodKeywordStoryTest {
+
+    @Managed(uniqueSession = true, driver="chrome")
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://www.google.co.nz")
+    public Pages pages;
+
+    @Steps
+    public EndUserSteps endUser;
+
+    @Test
+    public void searching_by_keyword_pears_should_display_the_corresponding_article() {
+        endUser.is_the_google_home_page();
+	    endUser.enters("pears");
+        endUser.starts_search();
+	    endUser.should_see_article_with_title_containing("Pear");
+    }
+
+    @Test
+    @WithDriver("firefox")
+    public void searching_by_keyword_pineapples_should_display_the_corresponding_article() {
+        endUser.is_the_google_home_page();
+	    endUser.enters("pineapples");
+        endUser.starts_search();
+        endUser.should_see_article_with_title_containing("Pineapple");
+    }
+}         
+----------------------
+
+Avec *easyb*, vous pouvez utiliser la directive +use_driver+ comme illustré ici:
+
+[source,java]
+----------------------
+using "thucydides"
+...
+thucydides.uses_default_base_url "http://localhost:9000" 
+thucydides.uses_driver chrome
+
+...
+
+scenario "The administrator adds a new category to the system",
+{
+    given "a new category needs to be added to the system", 
+    {
+      administrator.logs_in_to_admin_page_if_first_time()
+      administrator.opens_categories_list()
+    }
+    when "the administrator adds a new category", 
+    {
+       administrator.selects_add_category()
+       administrator.adds_new_category("Scala Developers","SCALA")
+    }
+    then "the system should confirm that the category has been created", 
+    {
+        administrator.should_see_confirmation_message "The Category has been created"
+    }
+    and "the new category should be visible to job seekers", 
+    {
+        job_seeker.opens_jobs_page()
+        job_seeker.should_see_job_category "Scala Developers" 
+    }
+}
+----------------------
+
+Avec JUnit, vous pouvez également utiliser l'annotation +@WithDriver+ pour indiquer un pilote pour un test individuel. Ceci surchargera à la fois le pilote système et l'attribut pilote de l'annotation +@Managed+ s'il y en a. Par exemple, le test suivant s'exécutera toujours avec Firefox:
+
+[source,java]
+------------------
+	@Test
+	@WithDriver("firefox")
+	public void searching_by_keyword_pineapples_should_display_the_corresponding_article() {
+	    endUser.is_the_google_home_page();
+	    endUser.enters("pineapples");
+	    endUser.starts_search();
+	    endUser.should_see_article_with_title_containing("Pineapple");
+	}
+------------------    
+
+== Implémenter des bibliothèques d'étapes                       
+
+une fois que vous avez défini les étapes dont vous avez besoin pour décrire vos tests haut niveau, vous devez les implémenter. Dans un test web automatisé, les étapes de test représentent le niveau d'abstraction situé entre vos objets pages (qui sont conçues en terme d'actions que vous exécutez sur une page donnée) et les histoires de plus haut niveau (suites d'actions davantage orientées métier qui illustrent comment une histoire utilisateur donnée a été implémentée). Les étapes peuvent contenir d'autres étapes et sont incluses dans les rapports Thucydides. A chaque fois qu'une étape est exécutée, une capture d'écran est enregistrée et affichée dans le rapport.
+
+=== Créer des bibliothèques d'étapes
+
+Les étapes de test sont des méthodes Java classiques annotées avec +@Step+. Vous rangez les étapes et les groupes d'étapes dans des bibliothèques d'étapes. Une bibliothèque d'étape n'est qu'une classe Java classique. Si vous exécutez des tests web, votre bibliothèque d'étapes devra soit posséder une variable membre +Pages+ soit, plus simplement, hériter de la classe +ScenarioSteps+, par exemple:
+
+
+[source,java]
+-------------------
+public class JobSeekerSteps extends ScenarioSteps {
+    public JobSeekerSteps(Pages pages) {
+        super(pages);
+    }
+
+
+    @Step
+    public void opens_jobs_page() {
+        FindAJobPage page = getPages().get(FindAJobPage.class);
+        page.open();
+    }
+
+    @Step
+    public void searches_for_jobs_using(String keywords) {
+        FindAJobPage page = getPages().get(FindAJobPage.class);
+        page.look_for_jobs_with_keywords(keywords);
+
+    }
+} 
+-------------------
+
+Notez que les méthodes d'étapes peuvent attendre des paramètres. Ces paramètres passés à la méthode d'étape seront enregistrés et apparaîtront dans les rapports Thucydides, ce qui en fait une excellente technique pour rendre vos tests davantage maintenables et modulaires.
+
+Les étapes peuvent également appeler d'autres étapes, ce qui est très utile pour des scénarios de tests plus compliqués. Le résultat sera la sorte de structure imbriquée que vous pouvez voir dans <<fig-test-report>>.
+
+== Définir des objets Page
+ 
+Si vous travaillez avec des tests web WebDriver, vous connaissez le concept de Page Objects ou Objets Page. Les objets Page sont une manière de masquer les détails d'implémentation d'une page web à l'intérieure d'une classe en n'exposant que les méthodes orientées métier en rapport avec cette page. C'est une excellente façon de rendre les tests web davantage maintenables.
+
+Avec Thucydides, les objets page sont des objets page WebDriver habituels à la condition qu'ils possède un constructeur qui prennent un paramètre WebDriver. Toutefois, le +PageObject+ de Thucydides fournit un certain nombre de méthodes utilitaires qui rendent plus commode l'utilisation des objets page, c'est pourquoi un objet page Thucydides hérite généralement de cette classe.
+ 
+Voici un exemple simple: 
+
+[source,java]
+---------------------
+@DefaultUrl("http://localhost:9000/somepage")
+public class FindAJobPage extends PageObject {
+
+    WebElement keywords;
+    WebElement searchButton;
+
+    public FindAJobPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void look_for_jobs_with_keywords(String values) {
+        typeInto(keywords, values);
+        searchButton.click();
+    }
+
+    public List<String> getJobTabs() {
+        List<WebElement> tabs = getDriver().findElements(By.xpath("//div[@id='tabs']//a"));
+        return extract(tabs, on(WebElement.class).getText());
+    }
+}
+---------------------
+
+La méthode +typeInfo+ est un raccourci qui se content d'effacer un champ et d'y entrer le texte indiqué. Si vous préférez un style davantage orienté API, vous pouvez également faire quelque chose comme ça:
+
+[source,java]
+---------------------
+@DefaultUrl("http://localhost:9000/somepage") 
+public class FindAJobPage extends PageObject {
+	WebElement keywordsField;
+	WebElement searchButton;
+
+	public FindAJobPage(WebDriver driver) {
+	    super(driver);
+	}
+
+	public void look_for_jobs_with_keywords(String values) {
+	    **enter(values).into(keywordsField);**
+	    searchButton.click();
+	}
+
+	public List<String> getJobTabs() {
+	    List<WebElement> tabs = getDriver().findElements(By.xpath("//div[@id='tabs']//a"));
+	    return extract(tabs, on(WebElement.class).getText());
+	}
+}
+---------------------
+
+=== Utiliser des pages dans une bibliothèque d'étapes
+
+Lorsque vous avez besoin d'utiliser un objet page dans l'une de vos étapes, vous vous contentez d'en demander une à la fabrique Page (Page factory) qui vous le fournira, par exemple: 
+
+[source,java]
+---------------------
+FindAJobPage page = getPages().get(FindAJobPage.class);
+---------------------
+
+Si vous voulez être sûr que vous êtes sur la bonne page, vous pouvez utiliser la méthode +currentPageAt()+. Celle-ci va chercher dans la classe Page Object toutes les annotations +@At+ présentes et, s'il y en a, vérifiera que l'URL actuelle correspond au motif d'URL indiqué dans l'annotation. Par exemple, lorsque vous l'appelez en utilisant +currentPageAt()+, l'objet page suivant va vérifier que l'URL actuelle est précisément http://www.apache.org.
+
+[source,java]
+---------------------
+@At("http://www.apache.org")
+public class ApacheHomePage extends PageObject {
+    ...
+}      
+---------------------
+
+L'annotation +@At+ gère également les jokers et les expressions rationnelles. L'objet page suivant correspondra à tout sous-domaine Apache:
+
+[source,java]
+---------------------
+@At("http://.*.apache.org")
+public class AnyApachePage extends PageObject {
+    ...
+}             
+---------------------
+
+Toutefois, dans le cas général, vous vous davantage intéressé par ce qui vient après le nom d'hôte. Vous pouvez utiliser le mot clef spécial +#HOST+ pour que tout nom de serveur convienne. C'est pour cette raison que l'objet page suivant correspondra à la fois à http://localhost:8080/app/action/login.form et à http://staging.acme.com/app/action/login.form. Les paramètres seront également ignorés, donc http://staging.acme.com/app/action/login.form?username=toto&password=oz correspondra également.
+
+[source,java]
+---------------------
+@At(urls={"#HOST/app/action/login.form"})
+public class LoginPage extends PageObject {
+   ...
+}     
+---------------------
+
+=== Ouvrir une page
+
+Un objet page est habituellement conçu pour fonctionner avec une page web donnée. Quand la méthode +open()+ est invoquée, le navigateur va s'ouvrir sur l'URL par défaut de la page. 
+
+L'annotation +@DefaultUrl+ indique l'URL que ce test doit utiliser quand il est exécuté de manière isolée (par exemple depuis votre IDE). Généralement, cependant, la partie hôte de l'URL par défaut sera remplacée par la propriété +webdriver.base.url+ ce qui vous permet de définir l'URL de base pour tous vos tests et de faciliter l'exécution de vos tests sur différents environnement, simplement en changeant cette valeur de propriété. Par exemple, dans la classe de test ci-dessus, définir +webdriver.base.url+ à 'https://staging.mycompany.com' fera que la page s'ouvrira à l'URL 'https://staging.mycompany.com/somepage'.
+
+Vous pouvez également définir des URL nommées qui peuvent être utilisées pour ouvrir la page web, assorties facultativement de paramètres. Par exemple, dans le code suivant, nous définissons une URL nommée 'open.issue' qui accepte un unique paramètre:
+
+[source,java]
+---------------------
+@DefaultUrl("http://jira.mycompany.org")
+@NamedUrls(
+  {
+    @NamedUrl(name = "open.issue", url = "http://jira.mycompany.org/issues/{1}")
+  }
+)
+public class JiraIssuePage extends PageObject {
+    ...
+}
+---------------------
+
+Vous pouvez alors ouvrir cette page sur l'URL http://jira.mycompany.org/issues/ISSUE-1 URL comme illustré ici:
+
+[source,java]
+---------------------
+page.open("open.issue", withParameters("ISSUE-1"));
+---------------------
+
+Vous pouvez également omettre totalement l'URL de base dans la définition de l'URL nommée en vous reposant sur les valeurs par défaut:
+
+[source,java]
+---------------------
+@DefaultUrl("http://jira.mycompany.org")
+@NamedUrls(
+  {
+    @NamedUrl(name = "open.issue", url = "/issues/{1}")
+  }
+)
+public class JiraIssuePage extends PageObject {
+    ...
+}                                         
+---------------------
+
+Et naturellement, vous pouvez faire des définitions multiples:
+
+[source,java]
+---------------------
+@NamedUrls(
+  {
+          @NamedUrl(name = "open.issue", url = "/issues/{1}"),
+          @NamedUrl(name = "close.issue", url = "/issues/close/{1}")
+  }
+)
+---------------------
+
+Vous ne devriez jamais essayer d'implémenter la méthode +open()+ vous-même. En fait, elle est final. Si vous avez besoin que votre page fasse quelque chose au chargement, comme attendre l'apparition d'un élément dynamique, vous pouvez utiliser l'annotation @WhenPageOpens. Les méthodes de PageObject dotées de cette annotation seront appelées (dans un ordre quelconque) après que l'URL aura été ouverte. Dans cette exemple, la méthode +open()+ ne rendra pas la main tant que l'élément web dataSection ne sera pas visible:
+
+[source,java]
+---------------------
+@DefaultUrl("http://localhost:8080/client/list")
+    public class ClientList extends PageObject {
+
+     @FindBy(id="data-section");
+     WebElement dataSection;
+     ...
+
+     @WhenPageOpens
+     public void waitUntilTitleAppears() {
+         element(dataSection).waitUntilVisible();
+     }
+}                    
+---------------------
+
+=== Travailler avec des éléments web
+
+==== Vérifier si des éléments sont visibles
+
+La méthode element de la classe PageObject offre une API fluide et commode pour interagir avec les éléments web en fournissant certaines fonctionnalités additionnelles fréquemment utilisées qui ne sont pas fournies nativement par l'API WebDriver. Par exemple, vous pouvez vérifier qu'un élément est visible comme illustré ici:
+
+[source,java]
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElement searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return element(searchButton).isVisible();
+    }
+    ...
+}      
+---------------------
+
+Si le bouton n'est pas présent à l'écran, le test va attendre un petit moment au cas où il apparaîtrait du fait de quelque magie Ajax. Si vous ne souhaitez pas que le test se comporte de cette façon, vous pouvez utiliser la version plus rapide:
+
+[source,java]
+---------------------
+public boolean searchButtonIsVisibleNow() {
+    return element(searchButton).isCurrentlyVisible();
+}
+---------------------
+
+Vous pouvez transformer ceci en assertion en utilisant à la place la méthode +shouldBeVisible()+:
+
+[source,java]
+---------------------
+public void checkThatSearchButtonIsVisible() {
+    element(searchButton).shouldBeVisible();
+}
+---------------------
+
+La méthode lancera une erreur d'assertion si le bouton de recherche n'est pas visible pour l'utilisateur final.
+
+Si vous n'êtes pas satisfait d'exposer le fait que votre page possède un bouton de recherche dans vos méthodes d'étape, vous pouvez rendre les choses encore plus simples en ajoutant une méthode accesseur qui renvoie une WebElementFacade, comme illustré ici:
+
+[source,java]
+---------------------
+public WebElementFacade searchButton() {
+    return element(searchButton);
+}
+---------------------
+
+Vos étapes contiendront alors du code tel que ce qui suit:
+
+[source,java]
+---------------------
+	searchPage.searchButton().shouldBeVisible();
+---------------------
+
+==== Vérifier si des éléments sont activés
+
+Vous pouvez également vérifier si un élément est activé ou non:
+
+[source,java]
+---------------------
+element(searchButton).isEnabled() element(searchButton).shouldBeEnabled()
+---------------------
+
+Il existe également les méthodes négatives correspondantes:
+
+[source,java]
+---------------------
+element(searchButton).shouldNotBeVisible();
+element(searchButton).shouldNotBeCurrentlyVisible();  
+element(searchButton).shouldNotBeEnabled() 
+---------------------
+
+Vous pouvez également contrôler des éléments qui sont présents sur la page mais qui ne sont pas visibles, par exemple:
+
+[source,java]
+---------------------
+element(searchButton).isPresent();
+element(searchButton).isNotPresent();
+element(searchButton).shouldBePresent();
+element(searchButton).shouldNotBePresent();          
+---------------------
+
+==== Manipuler des listes déroulantes
+
+Il existe également des méthodes d'aide pour les listes déroulantes. Supposons que vous avez la liste déroulante suivant sur votre page:
+
+[source,java]
+---------------------
+<select id="color">
+    <option value="red">Red</option>
+    <option value="blue">Blue</option>
+    <option value="green">Green</option>
+</select>
+---------------------
+
+Vous pouvez écrire un objet page pour manipuler cette liste déroulante comme suit:
+
+[source,java]
+---------------------
+public class FindAJobPage extends PageObject {
+
+	@FindBy(id="color")
+	WebElement colorDropdown;
+
+	public selectDropdownValues() {
+	    element(colorDropdown).selectByVisibleText("Blue");         
+	    assertThat(element(colorDropdown).getSelectedVisibleTextValue(), is("Blue"));   
+
+	    element(colorDropdown).selectByValue("blue");
+	    assertThat(element(colorDropdown).getSelectedValue(), is("blue"));
+
+	    page.element(colorDropdown).selectByIndex(2);
+	    assertThat(element(colorDropdown).getSelectedValue(), is("green"));
+
+	}
+	...
+}
+---------------------
+
+==== Vérifier le focus
+
+Vous pouvez savoir si un champ donné a le focus comme suit:
+
+[source,java]
+---------------------
+element(firstName).hasFocus()
+---------------------
+
+Vous pouvez également attendre que des éléments apparaissent, disparaissent, deviennent actifs ou inactifs:
+
+[source,java]
+---------------------
+element(button).waitUntilEnabled()
+element(button).waitUntilDisabled()
+---------------------
+
+ou
+
+[source,java]
+---------------------
+element(field).waitUntilVisible()
+element(button).waitUntilNotVisible()
+---------------------
+
+==== Utiliser des sélecteurs XPath et CSS
+
+Un autre moyen d'accéder à des éléments web et d'utiliser une expression XPath ou CSS. Vous pouvez utiliser la méthode +element+ avec une expression XPath pour faire cela plus facilement. Par exemple, imaginez que votre application web nécessite de cliquer sur un élément de liste contenant un code postal donné. Une façon de faire serait la suivante:
+
+[source,java]
+---------------------
+WebElement selectedSuburb = getDriver().findElement(By.xpath("//li/a[contains(.,'" + postcode + "')]"));
+selectedSuburb.click();                   
+---------------------                     
+
+Cependant, il est plus simple de faire comme ceci:
+
+[source,java]
+----------------------
+element(By.xpath("//li/a[contains(.,'" + postcode + "')]")).click();
+----------------------
+
+=== Travailler avec des pages asynchrones
+
+Les pages asynchrones sont celles dont les champs ou les données ne sont pas tous affichés quand la page est chargée. Parfois, vous devez attendre que certains éléments apparaissent ou disparaissent pour lancer vos tests. Thucydides fournit certaines méthodes pratiques dans la classe PageObject pour faciliter la gestion de tels scénarios. Elles sont principalement conçues pour être utilisées dans les méthodes métier de vos objets page, mais dans les exemples, nous les utiliserons par appel externe sur un PageObject pour la clarté de la démonstration.
+
+==== Vérifier si un élément est visible
+
+Pour WebDriver, il existe une distinction entre le fait qu'un élément soit présent à l'écran (i.e. dans le code source HTML) et qu'il soit rendu (i.e. visible pour l'utilisateur). Vous pouvez également avoir besoin de savoir si un élément est visible à l'écran . Vous pouvez le faire de deux façons. La première possibilité est d'utiliser la méthode isElementVisible qui renvoie une valeur booléenne indiquant si l'élément est rendu (visible pour l'utilisateur) ou pas:
+
+[source,java]
+----------------------
+assertThat(indexPage.isElementVisible(By.xpath("//h2[.='A visible title']")), is(true));
+-----------------------
+
+ou 
+
+[source,java]
+----------------------
+assertThat(indexPage.isElementVisible(By.xpath("//h2[.='An invisible title']")), is(false));
+----------------------
+
+La seconde possibilité est de décider activement que l'élément doit être visible:
+
+[source,java]
+----------------------
+indexPage.shouldBeVisible(By.xpath("//h2[.='An invisible title']");
+----------------------
+
+Si l'élément n'apparaît pas immédiatement, vous pouvez attendre qu'il apparaisse:
+
+[source,java]
+----------------------
+indexPage.waitForRenderedElements(By.xpath("//h2[.='A title that is not immediately visible']"));
+----------------------
+
+Vous pouvez également attendre qu'un élément disparaisse:
+
+[source,java]
+----------------------
+indexPage.waitForRenderedElementsToDisappear(By.xpath("//h2[.='A title that will soon disappear']"));
+----------------------
+
+Pour simplifier, vous pouvez également utiliser les méthodes +waitForTextToAppear+ et +waitForTextToDisappear+:
+
+[source,java]
+----------------------
+indexPage.waitForTextToDisappear("A visible bit of text");
+----------------------
+
+S'il y a plusieurs textes différents qui peuvent apparaître, vous pouvez utiliser +waitForAnyTextToAppear+ ou +waitForAllTextToAppear+:
+
+[source,java]
+----------------------
+indexPage.waitForAnyTextToAppear("this might appear","or this", "or even this");
+---------------------
+
+Si vous devez attendre qu'un élément parmi plusieurs possibles apparaisse, vous pouvez également utiliser la méthode +waitForAnyRenderedElementOf+:
+
+[source,java]
+----------------------
+indexPage.waitForAnyRenderedElementOf(By.id("color"), By.id("taste"), By.id("sound"));
+----------------------
+
+=== Exécuter du Javascript
+
+Il y a des situations dans lesquelles vous pourriez trouver utile d'exécuter un peu de Javascript directement dans le navigateur pour que le travail soit fait. Vous pouvez utiliser la méthode +evaluateJavascript()+ de la classe +PageObject+ pour faire cela. Par exemple, vous pourriez avoir besoin de calculer une expression et d'utiliser le résultat dans vos tests. La commande suivante va évaluer le titre du document et le renvoyer au code Java appelant:
+
+[source,java]
+---------------------
+String result = (String) evaluateJavascript("return document.title");
+---------------------
+
+Alternativement, vous pourriez simplement vouloir exécuter une commande Javascript localement dans le navigateur. Dans le code suivant, par exemple, nous positionnons le focus sur le champ de saisie 'firstname':
+
+[source,java]
+---------------------
+	evaluateJavascript("document.getElementById('firstname').focus()");           
+---------------------
+
+Et, si vous êtes familier avec JQuery, vous pouvez également faire appel aux expressions JQuery:
+
+[source,java]
+---------------------
+	evaluateJavascript("$('#firstname').focus()");           
+---------------------
+
+Ceci est souvent une stratégie utile si vous avez besoin de déclencher des événements tels que des survols de souris qui ne sont actuellement pas gérés par l'API WebDriver.
+
+=== Envoi de fichiers
+
+Envoyer des fichiers est  facile. Les fichiers à envoyer peuvent soit être placé dans un emplacement codé en dur (pas bien) ou enregistrés dans le chemin d'accès (mieux). Voici un exemple simple:
+
+[source,java]
+---------------------
+public class NewCompanyPage extends PageObject {
+    ...
+    @FindBy(id="object_logo")
+    WebElement logoField;
+
+    public NewCompanyPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void loadLogoFrom(String filename) {
+        upload(filename).to(logoField);
+    }
+}
+---------------------
+
+=== Utiliser des expressions de correspondance fluides
+
+Quand on écrit des tests de recette, on est souvent amené à exprimer des attentes relatives à des objets du domaine ou à des ensembles d'objets du domaine. Par exemple, si vous testez une fonctionnalité de recherche multi-critères, vous voulez savoir si l'application trouve les enregistrements que vous attendez. Vous pourriez être capable de faire cela d'une manière très précise (par exemple en sachant exactement les valeurs des champs que vous attendez) ou bien vous pourriez vouloir rendre vos tests davantage flexibles en exprimant les plages de valeurs qui seraient acceptables. Thucydides fournit quelques fonctionnalités qui facilitent l'écriture des tests de recette dans ce type de cas.
+
+Dans le reste de cette section, nous étudierons quelques exemples basés sur des tests du site de recherche Maven Central (voir <<>>). Ce site vous permet de rechercher des artifacts Maven dans le dépôt Maven et de consulter les détails d'un artefact donné.
+     
+[[maven-search-report]]
+.La page des résultats de la page de recherche de Maven Central
+image::figs/maven-search-report.png[scaledwidth="80%", width=800]
+
+Nous allons utiliser quelques tests imaginaires de non régression pour ce site afin d'illustrer comment les comparateurs (matchers) de Thucydides peuvent être utilisés pour écrire des tests plus expressifs. Le premier scénario que nous allons envisager consiste à simplement chercher un artifact par son nom et à s'assurer que seuls les artifacts correspondant à ce nom apparaissent dans la liste des résultats. Nous pourrions énoncer informellement informellement ce critère de validation de la manière suivante:
+
+ * Etant donné que le développeur est sur la page de recherche
+ * Et que le développeur cherche l'artifact appelé 'Thucydides'
+ * Alors le développeur doit voir au moins 16 artifacts Thucydides, chacun doté d'un unique Id d'artifact
+
+Avec JUnit, un test Thucydides correspondant à ce scénario pourrait ressembler à celui-ci:
+
+[source,java]
+--------------
+...
+import static net.thucydides.core.matchers.BeanMatchers.the_count;
+import static net.thucydides.core.matchers.BeanMatchers.each;
+import static net.thucydides.core.matchers.BeanMatchers.the;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.startsWith;
+
+@RunWith(ThucydidesRunner.class)
+public class WhenSearchingForArtifacts {
+
+    @Managed
+    WebDriver driver;
+
+    @ManagedPages(defaultUrl = "http://search.maven.org")
+    public Pages pages;
+
+    @Steps
+    public DeveloperSteps developer;
+
+    @Test
+    public void should_find_the_right_number_of_artifacts() {
+        developer.opens_the_search_page();
+        developer.searches_for("Thucydides");
+        developer.should_see_artifacts_where(the("GroupId", startsWith("net.thucydides")),
+                                             each("ArtifactId").isDifferent(),
+                                             the_count(is(greaterThanOrEqualTo(16))));
+
+    }
+}
+--------------
+
+Voyons comment le test est implémenté dans cette classe. Le test +should_find_the_right_number_of_artifacts()+ peut être explicité comme suit:
+
+ . Quand nous ouvrons la page de recherche
+
+ . Et que nous cherchons l'artifact contenant le mot 'Thucydides'
+
+ . Alors nous devrions voir une liste d'artifacts pour lesquels chaque Group ID commence par "net.thucydides", chaque Artifact ID est unique et qu'il y a au moins 16 entrées de ce type d'affichées.
+
+L'implémentation de ces étapes est illustrée ici:
+
+[source,java]
+-----------
+...
+import static net.thucydides.core.matchers.BeanMatcherAsserts.shouldMatch;
+
+public class DeveloperSteps extends ScenarioSteps {
+
+    public DeveloperSteps(Pages pages) {
+        super(pages);
+    }
+
+    @Step
+    public void opens_the_search_page() {
+        onSearchPage().open();
+    }
+
+    @Step
+    public void searches_for(String search_terms) {
+        onSearchPage().enter_search_terms(search_terms);
+        onSearchPage().starts_search();
+    }
+
+    @Step
+    public void should_see_artifacts_where(BeanMatcher... matchers) {
+        shouldMatch(onSearchResultsPage().getSearchResults(), matchers);
+    }
+
+    private SearchPage onSearchPage() {
+        return getPages().get(SearchPage.class);
+    }
+
+    private SearchResultsPage onSearchResultsPage() {
+        return getPages().get(SearchResultsPage.class);
+    }
+}
+-----------
+
+Les deux premières étapes sont implémentées par des méthodes relativement simples. Cependant, la troisième étape est plus intéressante. Regardons-la de plus près:
+
+[source,java]
+-----------
+    @Step
+    public void should_see_artifacts_where(BeanMatcher... matchers) {
+        shouldMatch(onSearchResultsPage().getSearchResults(), matchers);
+    }
+-----------
+
+Ici, nous passons un nombre arbitraire d'expression à la méthode. Ces expressions sont en fait des 'matchers', des instances de la classe BeanMatcher. Vous n'avez normalement pas à vous soucier de ce niveau de détail - vous créez ces expressions de correspondance en utilisant un ensemble de méthodes statiques fournies par la classe BeanMatcher. Aussi vous ne devriez typiquement passer que des expressions relativements lisibles telles que +the("GroupId", startsWith("net.thucydides"))+ ou +each("ArtifactId").isDifferent()+.
+
+La méthode +shouldMatch()+ de la classe BeanMatcherAsserts attend soit un unique objet Java, soit un ensemble d'objets Java et vérifie qu'au moins certains de ces objets correspondent aux contraintes indiquées par les matchers. Dans le cas du test web, ces objets sont typiquement des POJOs fournis par l'objet page pour représenter des objets du domaine ou des objets affichés à l'écran.
+
+Il existe un certain nombre d'expressions différente de matchers parmi lesquelles choisir. Le matcher le plus communément utilisé vérifie simplement la valeur d'un champ dans un objet. Par exemple, supposons que vous utilisez l'objet domaine montré ici:
+
+[source,java]
+-----------
+     public class Person {
+        private final String firstName;
+        private final String lastName;
+
+        Person(String firstName, String lastName) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+        }
+
+        public String getFirstName() {...}
+
+        public String getLastName() {...}
+    }
+-----------
+
+Vous pourriez écrire un test pour vous assurer que la liste des personnes contienne au moins une personne appelée "Bill" en utilisant la méthode statique "the", comme montré ici:
+
+[source,java]
+-----------
+    List<Person> persons = Arrays.asList(new Person("Bill", "Oddie"), new Person("Tim", "Brooke-Taylor"));
+ 
+    shouldMatch(persons, the("firstName", is("Bill"))
+-----------
+
+Le second paramètre de la méthode the() est un matcher Hamcrest qui vous donne une grande marge de flexibilité dans vos expressions. Par exemple, vous pourriez également écrire ce qui suit:
+
+[source,java]
+-----------
+    List<Person> persons = Arrays.asList(new Person("Bill", "Oddie"), new Person("Tim", "Brooke-Taylor"));
+ 
+    shouldMatch(persons, the("firstName", is(not("Tim"))));
+    shouldMatch(persons, the("firstName", startsWith("B")));
+-----------
+
+Vous pouvez également passer des conditions multiples:
+
+[source,java]
+-----------
+    List<Person> persons = Arrays.asList(new Person("Bill", "Oddie"), new Person("Tim", "Brooke-Taylor"));
+ 
+    shouldMatch(persons, the("firstName", is("Bill"), the("lastName", is("Oddie"));
+-----------
+
+Thucydides fournit également la classe DateMatchers qui vous permet d'appliquer les matchers Hamcrest aux objets Java standard Dates et aux Datetimes +JodaTime+. Les exemples de code suivant illustrent la façon dont cela peut être utilisé:
+
+[source,java]
+-----------
+    DateTime january1st2010 = new DateTime(2010,01,01,12,0).toDate();
+    DateTime may31st2010 = new DateTime(2010,05,31,12,0).toDate();
+
+    the("purchaseDate", isBefore(january1st2010))  
+    the("purchaseDate", isAfter(january1st2010))
+    the("purchaseDate", isSameAs(january1st2010))
+    the("purchaseDate", isBetween(january1st2010, may31st2010))
+-----------
+
+Vous avez également parfois besoin de vérifier des contraintes qui s'appliquent à tous les éléments considérés. Le plus simple de ces cas de figure consiste à vérifier que toutes les valeurs prises par un champ particulier sont uniques. Vous pouvez faire cela en utilisant la méthode +each()+:
+
+[source,java]
+-----------
+    shouldMatch(persons, each("lastName").isDifferent())
+-----------
+
+Vous pouvez également vérifier que le nombre d'éléments qui correspondent est conforme à ce que vous attendiez. Par exemple, pour vérifier qu'il n'y a qu'une seule personne dont le prénom est Bill, vous pourriez faire cela:
+
+[source,java]
+-----------
+     shouldMatch(persons, the("firstName", is("Bill"), the_count(is(1)));
+-----------
+
+Vous pouvez également vérifier les valeurs minimum et maximum en utilisant les méthodes min() et max(). Par exemple, si la classe Person possède une méthode +getAge()+, nous pourrions nous assurer que chaque personne a plus de 21 ans et moins de 65 en faisant ce qui suit:
+
+[source,java]
+-----------
+     shouldMatch(persons, min("age", greaterThanOrEqualTo(21)), 
+                          max("age", lessThanOrEqualTo(65)));
+-----------
+
+Ces méthodes fonctionnent avec les objets Java normaux mais aussi avec Maps. C'est pourquoi le code suivant fonctionne également:
+
+[source,java]
+-----------
+    Map<String, String> person = new HashMap<String, String>();
+    person.put("firstName", "Bill");
+    person.put("lastName", "Oddie");
+
+    List<Map<String,String>> persons = Arrays.asList(person);
+    shouldMatch(persons, the("firstName", is("Bill"))
+-----------
+
+L'autre chose sympathique avec cette approche est que les matchers s'intègrent harmonieusement avec les rapports Thucydides. Ainsi, quand vous utilisez la classe BeanMatcher comme paramètre de vos étapes de test, les conditions exprimées dans l'étape seront affichées dans le rapport du test, comme montré dans <<fig-maven-search-report>>.
+      
+[[fig-maven-search-report]]
+.Les expressions de condition sont affichées dans les rapports de test
+image::figs/maven-search-report.png[scaledwidth="80%", width=800]
+
+Il existe deux canevas utilisés habituellement lors de la construction d'objets pages et d'étapes qui utilisent ce type de matcher. Le premier consiste à écrire une une méthode d'objet de page qui retourne la liste des objets du domaine (par exemple, les personnes) affichées dans la table. Par exemple, la méthode getSearchResults() utilisée dans l'étape should_see_artifacts_where() pourrait être implémentée comme suit:
+
+[source,java]
+-------------
+    public List<Artifact> getSearchResults() {
+        List<WebElement> rows = resultTable.findElements(By.xpath(".//tr[td]"));
+        List<Artifact> artifacts = new ArrayList<Artifact>();
+        for (WebElement row : rows) {
+            List<WebElement> cells = row.findElements(By.tagName("td"));
+            artifacts.add(new Artifact(cells.get(0).getText(),
+                                       cells.get(1).getText(), 
+                                       cells.get(2).getText()));
+            
+        }
+        return artifacts;
+    }
+-------------
+
+Le second consiste à accéder directement au contenu de la table HTML sans explicitement modéliser les données qui y sont contenues. Cette approche est plus rapide et plus efficace si vous ne prévoyez pas de réutiliser l'objet du domaine dans d'autres pages. Nous verrons comment faire ceci après.
+
+==== Travailler avec les tables HTML
+
+Puisque les tables HTML restent largement utilisées pour représenter des séries de données dans les applications web, Thucydides possède une classe HtmlTable qui fournir nombre de méthodes utiles qui facilitent l'écriture des objets page qui contiennent des tables. Par exemple, la méthode rowsFrom renvoie le contenu d'une table HTML sous forme d'une liste de Maps dans laquelle chaque map contient les valeurs des cellules pour une ligne, indexées par l'en-tête correspondant, comme montré ici:
+ 
+[source,java]
+-------------
+...
+import static net.thucydides.core.pages.components.HtmlTable.rowsFrom;
+
+public class SearchResultsPage extends PageObject {
+
+    WebElement resultTable;
+
+    public SearchResultsPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public List<Map<String, String>> getSearchResults() {
+        return rowsFrom(resultTable);
+    }
+
+}
+-------------
+
+Ceci économise beaucoup de saisie - notre méthode +getSearchResults()+ ressemble maintenant à ceci:
+
+[source,java]
+---------
+    public List<Map<String, String>> getSearchResults() {
+        return rowsFrom(resultTable);
+    }
+---------
+
+Et puisque les matchers Thucydides fonctionnent à la fois avec les objets Java et les Maps, les expressions des matchers seront très semblables. La seule différence est que les Maps renvoyés sont indexés par les valeurs textuelles contenues dans les en-têtes de la table au lieu que ce soit dans les noms de propriété compatibles Java.
+
+Vous pouvez également utiliser la classe HtmlTable pour choisir des lignes particulières dans une table pour travailler avec. Par exemple, un autre scénario de test pour la page de recherche Maven implique de cliquer sur un artifact et d'en afficher les détails. Le test pour ceux-ci ressemble à quelque chose comme ça:
+
+[source,java]
+-------------
+    @Test
+    public void clicking_on_artifact_should_display_details_page() {
+        developer.opens_the_search_page();
+        developer.searches_for("Thucydides");
+        developer.open_artifact_where(the("ArtifactId", is("thucydides")),
+                                      the("GroupId", is("net.thucydides")));
+
+        developer.should_see_artifact_details_where(the("artifactId", is("thucydides")),
+                                                    the("groupId", is("net.thucydides")));
+    }
+-------------
+
+Maintenant la méthode open_artifact_where() nécessite de cliquer sur une ligne particulière de la table. Cette étape ressemble à quelque chose comme ça:
+
+[source,java]
+-------------
+    @Step
+    public void open_artifact_where(BeanMatcher... matchers) {
+        onSearchResultsPage().clickOnFirstRowMatching(matchers);
+    }
+-------------
+
+De cette façon, nous délégons effectivement à l'objet Page qui effectue le vrai travail. La méthode correspondante de l'objet Page ressemble à ceci:
+
+[source,java]
+-------------
+import static net.thucydides.core.pages.components.HtmlTable.filterRows;
+...
+    public void clickOnFirstRowMatching(BeanMatcher... matchers) {
+        List<WebElement> matchingRows = filterRows(resultTable, matchers);
+        WebElement targetRow = matchingRows.get(0);
+        WebElement detailsLink = targetRow.findElement(By.xpath(".//a[contains(@href,'artifactdetails')]"));
+        detailsLink.click();
+    }   
+-------------
+
+La partie intéressante ici est la première ligne de la méthode où nous utilisons la méthode filterRows(). Cette méthode va renvoyer une liste de WebElements qui correspondent au matcher que vous avez passé. Cette méthode rend vraiment facile la sélection de lignes qui vous intéressent pour un traitement particulier.
+   
+=== Exécuter plusieurs étapes en utilisant le même objet Page 
+
+Parfois, faire appel au navigateur peut être coûteux. Par exemple, si vous testez des tables avec un grand nombre d'éléments web (par exemple un élément web pour chaque cellule), les performances peuvent être basses et l'utilisation mémoire élevée. Normalement Thucydides va demander la page (et créer un objet Page) à chaque fois que vous appelez +Pages.get()+ ou +Pages.currentPageAt()+. Si vous êtes certain que la page ne va pas changer (i.e vous n'allez exécuter que des opérations de lecture sur la page) vous pouvez utiliser la méthode onSamePage() de la classe ScenarioSteps pour vous assurer que tous les appels suivants à +Pages.get()+ ou +Pages.currentPageAt()+ renverront le même objet page:
+
+[source,java]
+------------------
+@RunWith(ThucydidesRunner.class)
+public class WhenDisplayingTableContents {
+
+    @Managed
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://my.web.site/index.html")
+    public Pages pages;
+
+    @Steps
+    public DemoSiteSteps steps;                   
+
+    @Test
+    public void the_user_opens_another_page() {
+        steps.navigate_to_page_with_a_large_table();       
+        steps.onSamePage(DemoSiteSteps.class).check_row(1);
+        steps.onSamePage(DemoSiteSteps.class).check_row(2);
+        steps.onSamePage(DemoSiteSteps.class).check_row(3);
+    }
+}
+---------------------
+
+== Intégration avec Spring
+
+i vous exécutez vos tests de recette sur un serveur web embarqué (par exemple en utilisant Jetty), il peut parfois s'avérer utile d'accéder aux couches de service directement pour le code de jointure ou lié à l'infrastructure. Par exemple, vous pouvez avoir un scénario dans lequel une action utilisateur doit, par effet de bord, enregistrer un journal d'audit dans une table de la base de données. Pour que vos tests restent simples et centrés sur le besoin, vous pourriez vouloir appeler la couche service directement pour vérifier le journal d'audit plutôt que de vous connecter en tant qu'administrateur et de naviguer dans l'écran d'audit des journaux.
+
+Spring fournit une excellente gestion pour les tests d'intégration via le lanceur de tests SpringJUnit4ClassRunner. Malheureusement, si vous utilisez Thucydides, ce n'est pas envisageable car un test ne peut avoir deux lanceurs en même temps. Heureusement, cependant, il y a une solution ! Pour injecter des dépendances en utilisant un fichier de configuration Spring, il vous suffit d'inclure la règle SpringIntegration Thucydides dans votre classe de test. Vous instanciez cette variable comme illustré ici:
+
+[source,java]
+--------------------
+@Rule
+public SpringIntegration springIntegration = new SpringIntegration();
+--------------------
+
+Ensuite vous utilisez l'annotation +@ContextConfiguration+ pour définir le ou les fichiers de configuration à utiliser. Ensuite vous pouvez injecter des dépendances comme vous le feriez avec un test d'intégration Spring ordinaire en utilisant les annotations habituelles de Spring telles que +@Autowired+ ou +@Resource+. Par exemple, supposons que nous utilisons le fichier de configuration Spring suivant appelé 'config.xml':
+
+[source,java]
+--------------------
+<beans>
+    <bean id="widgetService" class="net.thucydides.junit.spring.WidgetService">
+        <property name="name"><value>Widgets</value></property>
+        <property name="quota"><value>1</value></property>
+    </bean>
+    <bean id="gizmoService" class="net.thucydides.junit.spring.GizmoService">
+        <property name="name"><value>Gizmos</value></property>
+        <property name="widgetService"><ref bean="widgetService" /></property>
+    </bean>
+</beans>
+--------------------
+
+Nous pouvons utiliser ce fichier de configuration pour injecter des dépendances comme montré ici:
+
+[source,java]
+--------------------
+@RunWith(ThucydidesRunner.class)
+@ContextConfiguration(locations = "/config.xml")
+public class WhenInjectingSpringDependencies {
+
+    @Managed
+    WebDriver driver;
+
+    @ManagedPages(defaultUrl = "http://www.google.com")
+    public Pages pages;
+
+    @Rule
+    public SpringIntegration springIntegration = new SpringIntegration();
+
+    @Autowired
+    public GizmoService gizmoService;
+
+    @Test
+    public void shouldInstanciateGizmoService() {
+        assertThat(gizmoService, is(not(nullValue())));
+    }
+
+    @Test
+    public void shouldInstanciateNestedServices() {
+        assertThat(gizmoService.getWidgetService(), is(not(nullValue())));
+    }
+}
+--------------------
+
+D'autres annotations liées au contexte telles que +@DirtiesContext+ fonctionneront également comme elles le feraient dans un test d'intégration Spring traditionnel. Spring va créer un nouveau ApplicationContext pour chaque test mais il n'en n'utilisera qu'un seul pour toutes les méthodes de votre test. Si l'un de vos tests modifie un objet dans l'ApplicationContext vous pourriez vouloir dire à Spring qu'il réinitialise le contexte pour le test suivant. Vous ferez cela en utilisant l'annotation +@DirtiesContext+. Dans le cas de test suivant, par exemple, les tests échoueront sans l'annotation +@DirtiesContext+:
+
+[source,java]
+--------------------
+@RunWith(ThucydidesRunner.class)
+@ContextConfiguration(locations = "/spring/config.xml")
+public class WhenWorkingWithDirtyContexts {
+
+    @Managed
+    WebDriver driver;
+
+    @ManagedPages(defaultUrl = "http://www.google.com")
+    public Pages pages;
+
+    @Rule
+    public SpringIntegration springIntegration = new SpringIntegration();
+
+    @Autowired
+    public GizmoService gizmoService;
+
+    @Test
+    @DirtiesContext
+    public void shouldNotBeAffectedByTheOtherTest() {
+        assertThat(gizmoService.getName(), is("Gizmos"));
+        gizmoService.setName("New Gizmos");
+    }
+
+    @Test
+    @DirtiesContext
+    public void shouldNotBeAffectedByTheOtherTestEither() {
+        assertThat(gizmoService.getName(), is("Gizmos"));
+        gizmoService.setName("New Gizmos");
+    }
+
+}
+--------------------
+
+== Rapports Thucydide
+
+Pour générer l'intégralité des rapports Thucydide, exécutez mvn thucydides:aggregate. Pour que cela fonctionne, vous devez ajouter le bon groupe de plugins à votre fichier settings.xml, comme montré ici:
+
+[source,xml]
+--------------------
+<settings>
+ <pluginGroups>
+   <pluginGroup>net.thucydides.maven.plugins</pluginGroup>
+   ...
+ </pluginGroups>
+ ...
+</settings>
+--------------------
+
+Vous pouvez exécuter ceci dans la même commande que celle de vos tests en positionnant la propriété maven.test.failure.ignore à true. Si vous ne faites pas cela, Maven s'arrêtera si la moindre erreur se produit et ne réalisera pas la génération du rapport:
+
+[source,java]
+--------------------
+$ mvn clean verify thucydides:aggregate -Dmaven.test.failure.ignore=true
+--------------------
+
+Vous pouvez également intégrer les rapports Thucydide dans les rapports standards Maven. Si vous utilisez Maven 2, ajoutez simplement le plugin Maven Thucydide à la section reporting:
+
+[source,xml]
+--------------------
+<reporting>
+    <plugins>  
+        ...
+        <plugin>
+            <groupId>net.thucydides.maven.plugins</groupId>
+            <artifactId>maven-thucydides-plugin</artifactId>
+            <version>${thucydides.version}</version>
+        </plugin>
+    </plugins>
+</reporting>
+--------------------
+
+Si vous utilisez Maven 3, vous devrez ajouter le rapport Maven Thucydides à la configuration maven-site-plugin comme illustré ici:
+
+[source,xml]
+--------------------
+<build>
+    <plugins> 
+        ...
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <version>3.0-beta-3</version>
+            <configuration>
+                <reportPlugins>   
+                    ...
+                    <plugin>
+                        <groupId>net.thucydides.maven.plugins</groupId>
+                        <artifactId>maven-thucydides-plugin</artifactId>
+                        <version>${thucydides.version}</version>
+                    </plugin>
+                </reportPlugins>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+--------------------
+
+Pour générer ce rapport, lancez la commande mvn site après avoir exécuté mvn verify, par exemple.
+
+--------------------
+$ mvn clean verify site
+--------------------
+
+Ceci produira un rapport résumé dans la documentation de site Maven générée avec des liens vers les rapports Thucydides plus détaillées:
+
+[[fig-maven-report]]
+.Rapports de tests Thucydides dans le site Maven
+image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=800]
+
+
+== Exécuter des tests Thucydides en ligne de commandes
+
+Typiquement, vous exécuterez Thucydides comme une partir du processus de build (soit localement, soit sur un serveur d'intégration continue). En plus de l'option +webdriver.driver+ déjà vue, vous pouvez également passer un certain nombre de paramètres en tant que propriétés système pour personnaliser la façon dont les tests sont exécutés. En voici la liste complète:
+
+	* *webdriver.driver*: Quel navigateur vous voulez que vos tests utilisent: firefox, chrome ou iexplorer.
+
+	* *webdriver.base.url*: L'URL de départ par défaut pour l'application, et l'URL de base pour les chemins relatifs.
+
+	* *thucydides.outputDirectory*: Où les rapports doivent être générés.
+
+	* *thucydides.only.save.failing.screenshots* : Est-ce que Thucydides doit n'enregistrer des captures d'écran que pour les tests en échec ? Ceci permet d'économiser de l'espace disque et augmente un peu la vitesse des tests. C'est très utile pour les tests dirigés par les données.
+
+	* *thucydides.restart.browser.frequency*: Lors de tests dirigés par les données, certains navigateurs (Firefox en particulier) peuvent ralentir au bout d'un moment à cause de fuites mémoire. Pour pallier cela, vous pouvez demander à Thucydides de démarrer une nouvelle session du navigateur à intervalles réguliers quand il exécute des tests dirigés par les données.
+
+	* *thucycides.step.delay*: Pause (en ms) entre chaque étape de test.
+
+	* *untrusted.certificates*: Utile si vous exécutez des tests Firefox sur un serveur de test HTTPS sans certificat valide. Ceci va faire que Thucydides va utiliser un profil doté de la propriété AssumeUntrustedCertificateIssuer.
+
+	* *thucydides.timeout*: Combien de temps le pilote attend les éléments qui ne sont pas immédiatement visibles.
+
+	* *thucydides.browser.width* and *thucydides.browser.height*: Redimensionne le navigateur à la taille indiquée de façon à prendre des captures d'écran plus grandes. Cela doit fonctionner avec Internet Explorer et Firefox mais pas avec Chrome.
+
+	* *thucydides.issue.tracker.url*: L'URL utilisée pour générer les liens vers le système de suivi des bugs.
+	
+	* *thucydides.activate.firebugs* : * Active les plugins Firebugs et FireFinder pour Firefox quand des tests WebDriver sont exécutés. Ceci est utile pour déboguer mais pas recommandé quand les tests sont exécutés sur un serveur de build.
+
+    * *thucydides.batch.count*: Si le test de batch est utilisé, ceci est la taille des batches exécutés.
+
+     * *thucydides.batch.number* : Si le test de batch est utilisé, ceci est le numéro du batch exécuté sur cette machine.
+
+Un exemple d'utilisation de ces paramètres est montré ici:                                 
+
+------------------
+$ mvn test -Dwebdriver.driver=iexplorer -Dwebdriver.base.url=http://myapp.staging.acme.com
+------------------
+
+Ceci exécutera les tests sur le serveur 'staging' en utilisant Internet Explorer.
+
+	* *webdriver.firefox.profile*: Le chemin du répertoire du profil à utiliser quand on lance Firefox. Par défaut, webdriver crée un profil anonyme. Ceci est utile si vous voulez exécutez des tests web en utilisant votre propre profil Firefox. Si vous n'êtes pas certain de la façon de trouver le chemin d'accès à votre profil, allez voir ici: http://support.mozilla.com/en-US/kb/Profiles. Par exemple, pour lancer le profil par défaut sur un système Mac OS X, vous feriez quelque chose comme ça:
+
+------------------
+$ mvn test -Dwebdriver.firefox.profile=/Users/johnsmart/Library/Application\ Support/Firefox/Profiles/2owb5g1d.default
+------------------
+
+Sur Windows, ce serait quelque chose comme:
+
+------------------
+C:\Projects\myproject>mvn test -Dwebdriver.firefox.profile=C:\Users\John Smart\AppData\Roaming\Mozilla\Firefox\Profiles\mvxjy48u.default
+------------------
+
+	* *thucydides.history*: Le répertoire dans lequel les données de résumé de l'historique des builds sont sauvegardées pour chaque projet. Chaque projet possède son propre sous-répertoire dans ce répertoire. Par défaut, c'est ~./thucydides.
+
+Si vous voulez configurer des valeurs par défaut pour certaines de ces propriétés pour votre propre environnement de développement (par exemple, toujours activer le plugin Firebug sur votre machine de développement), créez un fichier appelé +thucydides.properties+ dans votre répertoire personnel et réglez-y les valeurs voulues. Ces valeurs seront toujours surchargées par celles définies dans les variables d'environnement. Un exemple est montré ici:
+
+---------------
+thucydides.activate.firebugs = true     
+thucydides.browser.width = 1200  
+---------------
+
+== Intégrer avec les systèmes de suivi de bugs
+
+=== Intégration de base avec un système de suivi de bugs 
+
+Thucydides peut être configuré pour s'intégrer avec des systèmes de suivi de bugs tels que JIRA et Trac. Vous indiquez ceci en utilisant la propriété système +thucydides.issue.tracker.url+. Cette propriété est l'URL nécessaire pour ouvrir une entrée donnée dans laquelle le numéro de cette entrée est remplacé par '{0}', par exemple:
+
+------------------
+http://my.jira.server/browse/MYPROJECT-{0}
+------------------
+
+Pour faire cela dans Maven, vous devez passer la propriété système à JUnit en utilisant le plugin maven-surefire-plugin comme montré ici:
+
+[source,xml]
+------------------
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>2.7.1</version>
+    <configuration>
+        <systemPropertyVariables>
+            <thucydides.issue.tracker.url>http://my.jira.server/browse/MYPROJECT-{0}</thucydides.issue.tracker.url>
+        </systemPropertyVariables>
+    </configuration>
+</plugin>  
+------------------
+
+Thucydides fournit également un support spécial pour l'outil de suivi de bug JIRA de Atlassian. Si vous fournissez la propriété système +jira.url+ au lieu de +jira.url+ +thucydides.issue.tracker.url+, vous n'avez besoin de fournir que l'URL de base de votre instance JIRA et pas le chemin complet:
+
+------------------
+org.apache.maven.pluginsmaven-surefire-plugin2.7.1http://my.jira.server
+------------------   
+
+Vous devez fournir le numéro d'entrée. Vous pouvez le mettre dans le titre du test en le préfixant avec le caractère '#'. Pour les tests easyb, cela implique simplement de mentionner le numéro d'entrée  (toujours en commençant par un caractère '#') quelque part dans le nom du scénario. Pour les tests JUnit, vous utiliserez l'annotation @Title comme illustré ici:
+
+[source,java]
+------------------   
+@RunWith(ThucydidesRunner.class)
+public class FixingAnIssueScenario {
+
+    @Managed
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://www.mysite.com")
+    public Pages pages;
+
+    @Steps
+    public SampleScenarioSteps steps;
+
+    @Title("Shopping cart should let users add multiple articles - fixes issues #123")
+    @Test
+    public void shopping_cart_should_let_users_add_multiple_articles() {
+        steps.add_item_to_cart("nuts");
+        steps.add_item_to_cart("bolts");
+        steps.cart_should_contain("nuts","bolts");
+    }    
+}        
+------------------   
+
+Une autre façon d'indiquer les entrées dans JUnit consiste à utiliser les annotations @Issue ou @Issues. Vous pouvez utiliser l'annotation @Issue pour associer un test donné avec une entrée particulière.
+
+[source,java]
+------------------   
+@Issue("#123")
+@Test
+public void shopping_cart_should_let_users_add_multiple_articles() {
+    steps.add_item_to_cart("nuts");
+    steps.add_item_to_cart("bolts");
+    steps.cart_should_contain("nuts","bolts");
+}    
+------------------   
+
+Vous pouvez également mettre l'annotation @Issue au niveau de la classe, auquel cas l'entrée sera associée à chaque test de la classe:
+
+[source,java]
+------------------   
+@RunWith(ThucydidesRunner.class)
+@Issue("#123") 
+public class FixingAnIssueScenario {
+
+	@Managed
+	public WebDriver webdriver;
+
+	@ManagedPages(defaultUrl = "http://www.mysite.com")
+	public Pages pages;
+
+	@Steps
+	public SampleScenarioSteps steps;
+
+	@Test
+	public void shopping_cart_should_let_users_add_multiple_articles() {
+	    steps.add_item_to_cart("nuts");
+	    steps.add_item_to_cart("bolts");
+	    steps.cart_should_contain("nuts","bolts");
+	}
+
+	@Test
+	public void some_other_test() {
+	    ...
+	}    
+}
+------------------   
+
+Si un test doit être associé à plusieures entrées, vous pouvez utiliser à la place l'annotation @Issues:
+
+[source,java]
+------------------   
+@Issues({"#123", #456"}) 
+@Test public void shopping_cart_should_let_users_add_multiple_articles() { 
+    steps.add_item_to_cart("nuts"); steps.add_item_to_cart("bolts"); 
+	steps.cart_should_contain("nuts","bolts"); 
+}
+------------------   
+
+Lorsque vous faites cela, les entrées apparaîtront dans les rapports ThucydidesRunner avec un hyperlien vers l'entrée correspondante de votre système de suivi de bugs.
+
+jira-integration-example
+
+=== Intégration bi-directionnelle avec JIRA
+ 
+Une stratégie habituelle pour les organisations utilisant JIRA consiste à représenter les cartes d'histoire (story cards) et/ou les critères de validation associés comme des entrées JIRA. Il est utile de savoir quels tests automatisés ont été exécutés pour une story card JIRA et quelle histoire est testée par un test donné. 
+
+Vous pouvez ajouter ces deux fonctionnalités à votre projet Thucydides en utilisant le +thucydides-jira-plugin+. D'abord, vous devez ajouter le +thucydides-jira-plugin+ à vos dépendances Maven. Les dépendances dont vous aurez besoin (incluant les dépendances normales de Thucydides) sont listées ici:
+
+[source,xml]
+------------------   
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit-dep</artifactId>
+        <version>4.10</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.hamcrest</groupId>
+        <artifactId>hamcrest-all</artifactId>
+        <version>1.1</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>net.thucydides</groupId>
+        <artifactId>thucydides-junit</artifactId>
+        <version>0.6.1</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>net.thucydides.easyb</groupId>
+        <artifactId>thucydides-easyb-plugin</artifactId>
+        <version>0.6.1</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>net.thucydides.plugins.jira</groupId>
+        <artifactId>thucydides-jira-plugin</artifactId>
+        <version>0.6.1</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.codehaus.groovy</groupId>
+        <artifactId>groovy-all</artifactId>
+        <version>1.8.5</version>
+    </dependency>
+    ...
+------------------   
+
+Notez que l'intégration du cycle de vie JIRA requiert Groovy version 1.8 ou supérieure pour fonctionner correctement.
+
+Vous aurez également besoin d'une implémentation de +slf4j+, par exemple ‘slf4j-log4j12′ (si vous utilisez Log4j) ou ‘logback-classic’ (si vous utilisez LogBack) (voir http://www.slf4j.org/codes.html#StaticLoggerBinder pôur plus de détails). Si vous êtes bloqués, ajoutez simplement slf4j-simple:
+
+[source,xml]
+------------------   
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>1.6.1</version>
+    </dependency>
+------------------   
+
+Dans Thucydides, vous pouvez vous référer à une entrée JIRA en plaçant une référence au numéro correspondant de l'entrée JIRA soit dans le nom du test (en utilisant l'annotation @Title, par exemple) ou, plus simplement, en utilisant les annotations @Issue ou @Issues comme montré ici:
+
+[source,java]
+------------------   
+    @RunWith(ThucydidesRunner.class)
+    public class SearchByKeywordStoryTest {
+
+        @Managed(uniqueSession = true)
+        public WebDriver webdriver;
+
+        @ManagedPages(defaultUrl = "http://www.wikipedia.com")
+        public Pages pages;
+
+        @Steps
+        public EndUserSteps endUser;
+
+        @Issue("#WIKI-1")
+        @Test
+        public void searching_by_unambiguious_keyword_should_display_the_corresponding_article() {
+            endUser.is_on_the_wikipedia_home_page();
+            endUser.looks_up_cats();
+            endUser.should_see_article_with_title("Cat - Wikipedia, the free encyclopedia");
+
+        }
+    }
+------------------   
+
+Dans cet exemple, le test sera associé avec l'entrée WIKI-1.
+
+Alternativement, vous pourriez vouloir associer une entrée (telle qu'une story card) avec toutes les histoires d'un cas de test en plaçant une annotation @Issue (ou @Issues) au niveau de la classe:
+
+[source,java]
+------------------   
+        @RunWith(ThucydidesRunner.class)
+        @Issue("#WIKI-1")
+        public class SearchByKeywordStoryTest {
+
+            @Managed(uniqueSession = true)
+            public WebDriver webdriver;
+
+            @ManagedPages(defaultUrl = "http://www.wikipedia.com")
+            public Pages pages;
+
+            @Steps
+            public EndUserSteps endUser;
+
+            @Test
+            public void searching_by_unambiguious_keyword_should_display_the_corresponding_article() {
+                endUser.is_on_the_wikipedia_home_page();
+                endUser.looks_up_cats();
+                endUser.should_see_article_with_title("Cat - Wikipedia, the free encyclopedia");
+
+            }
+        }
+------------------   
+
+Thucydides peut utiliser ces annotations pour s'intégrer avec les entrées de JIRA. L'intégration la plus simple avec JIRA implique d'ajouter des liens vers les entrées correspondantes de JIRA dans les rapports Thucydides. Pour activer ceci, vous avez simplement à fournir l'option de ligne de commande *jira.url*. Vous avez cependant à passer cette option à JUnit en utilisant le maven-surefire-plugin comme montré ici:
+
+[source,xml]
+------------------   
+  <build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.10</version>
+            <configuration>
+                <argLine>-Xmx1024m</argLine>
+                <systemPropertyVariables>
+                    <jira.url>http://jira.acme.com</jira.url>
+                </systemPropertyVariables>
+            </configuration>
+        </plugin>
+        ...
+------------------   
+
+Pour une intégration plus fine et avec aller-retours, vous pouvez également utiliser le thucydides-jira-plugin. Celui-ci n'inclura pas seulement les liens vers JIRA dans les rapports Thucydides mais il mettra également à jour les entrées JIRA avec les liens vers les pages des histoires correspondantes dans les rapports Thucydides. Pour configurer cela, ajoutez la dépendance thucydides-jira-plugin dependency à votre projet.
+dependencies:
+
+[source,xml]
+------------------   
+    <dependency>
+        <groupId>net.thucydides.plugins.jira</groupId>
+        <artifactId>thucydides-jira-plugin</artifactId>
+        <version>0.6.1</version>
+        <scope>test</scope>
+    </dependency>
+------------------   
+
+Vous devez également fournir un nom d'utilisateur et un mot de passe pour la connexion à JIRA ainsi que l'URL à laquelle les rapports Thucydides seront publiés (par exemple, sur votre serveur d'intégration continue). Vous ferez cela en passant les paramètres systèmes jira.username, jira.password et thucydides.public.url.
+
+[source,xml]
+------------------   
+  <build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.10</version>
+            <configuration>
+                <argLine>-Xmx1024m</argLine>
+                <systemPropertyVariables>
+                    <jira.url>http://jira.acme.com</jira.url>
+                    <jira.username>${jira.demo.user}</jira.username>
+                    <jira.password>${jira.demo.password}</jira.password>
+                    <thucydides.public.url>http://localhost:9000</thucydides.public.url>
+                </systemPropertyVariables>
+            </configuration>
+        </plugin>
+        ...
+------------------   
+
+Thucydides génère également des rapports agrégés regroupant les résultats des histoires et des fonctionnalités. Pour inclure les liens JIRA dans ces rapports, vous devez renseigner l'option de configuration +jiraUrl+ dans le +maven-thucydides-plugin+, comme illustré ici:
+
+[source,xml]
+------------------   
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.0-beta-3</version>
+        <configuration>
+            <reportPlugins>
+                <plugin>
+                    <groupId>net.thucydides.maven.plugins</groupId>
+                    <artifactId>maven-thucydides-plugin</artifactId>
+                    <version>@project.version@</version>
+                    <configuration>
+                         <jiraUrl>http://jira.acme.com</jiraUrl>
+                     </configuration>
+                 </plugin>
+            </reportPlugins>
+        </configuration>
+    </plugin>
+------------------   
+
+Si vous ne souhaitez pas que Thucydides mette à jour les entrées JIRA pendant une exécution donnée (par exemple à des fins de test ou de débogage), vous pouvez également positionner +thucydides.skip.jira.updates+ à true, par exemple: 
+
+------------------   
+ $ mvn verify -Dthucydides.skip.jira.updates=true
+------------------   
+
+Vous pouvez également configurer le plugin pour mettre à jour l'état des entrées JIRA. Ceci est désactivé par défaut: pour utiliser cette option, vous devez positionner l'option +thucydides.jira.workflow.active+ option à ‘true’, par exemple:
+
+------------------   
+ $ mvn verify -Dthucydides.jira.workflow.active=true
+------------------   
+
+La configuration par défaut fonctionnera avec le cycle de vie JIRA par défaut: les entrées ouvertes ou en cours associées avec des tests réussis seront résolues, et les entrées fermées ou résolues associées à des tests en échec seront réouvertes. Si vous utilisez un cycle de vie personnalisé, ou si vous voulez modifier la façon dont les transitions se comportent, vous pouvez écrire votre propre configuration de cycle de vie. La configuration de cycle de vie utilise un simple DSL Groovy. Ce qui suit est un exemple de fichier de configuration utilisé pour le cycle de vie par défaut:
+
+[source,java]
+------------------   
+    when 'Open', {
+        'success' should: 'Resolve Issue'
+    }
+
+    when 'Reopened', {
+        'success' should: 'Resolve Issue'
+    }
+
+    when 'Resolved', {
+        'failure' should: 'Reopen Issue'
+    }
+
+    when 'In Progress', {
+        'success' should: ['Stop Progress','Resolve Issue']
+    }
+
+    when 'Closed', {
+        'failure' should: 'Reopen Issue'
+    }
+------------------   
+
+Vous pouvez écrire votre propre fichier de configuration et le mettre dans le classpath de votre projet de test (par exemple, dans le répertoire src/test/resources). Ensuite, vous pouvez surcharger la configuration par défaut en utilisant la propriété +thucydides.jira.workflow+ dans le fichier +pom.xml+ ou directement en ligne de commande, par exemple:
+
+------------------   
+ $ mvn verify -Dthucydides.jira.workflow=my-workflow.groovy
+------------------   
+
+Alternativement, vous pouvez simplement créer un fichier appelé +jira-workflow.groovy+ et le placer quelque part dans votre classpath. Thucydides utilisera alors ce cycle de vie. Dans les deux cas, vous n'avez pas besoin de renseigner explicitement la propriété +thucydides.jira.workflow.active+.
+
+Vous pouvez également intégrer les entrées JIRA dans vos histoires Thucydides easyb. Lorsque vous utilisez l'intégration easyb Thucydides, vous associez une ou plusieurs entrées avec l'histoire easyb comme un tout, mais pas avec des scénarios particuliers. Vous faites cela en utilisant la notation thucydides.tests_issue:
+
+[source,java]
+------------------   
+    using "thucydides"
+
+    thucydides.uses_default_base_url "http://www.wikipedia.com"
+    thucydides.uses_steps_from EndUserSteps
+    thucydides.tests_story SearchByKeyword
+
+    thucydides.tests_issue "#WIKI-2"
+
+    scenario "Searching for cats", {
+        given "the user is on the home page", {
+            end_user.is_on_the_wikipedia_home_page()
+        }
+        when "the end user searches for 'cats'", {
+            end_user.looks_up_cats()
+        }
+        then "they should see the corresponding article", {
+           end_user.should_see_article_with_title("Cat - Wikipedia, the free encyclopedia")
+        }
+    }
+------------------   
+
+Vous pouvez également associer plusieurs entrées en utilisant +thucydides.tests_issues+:
+
+------------------   
+    thucydides.tests_issue "#WIKI-2", "#WIKI-3"
+------------------   
+
+Pour utiliser easyb avec Thucydides, vous devez ajouter la dernière version de +thucydides-easyb-plugin+ à vos dépendances, si ce n'est pas déjà fait:
+
+[source,xml]
+------------------   
+    <dependency>
+        <groupId>net.thucydides.easyb</groupId>
+        <artifactId>thucydides-easyb-plugin</artifactId>
+        <version>0.6.1</version>
+        <scope>test</scope>
+    </dependency>
+------------------   
+
+Comme avec JUnit, vous devez passer les paramètres appropriés à easyb pour que cela fonctionne. Vous devrez également utiliser la version 1.4 ou supérieure de maven-easyb-plugin, configuré pour passer les paramètres JIRA comme montré ici:
+
+[source,xml]
+------------------   
+    <plugin>
+        <groupId>org.easyb</groupId>
+        <artifactId>maven-easyb-plugin</artifactId>
+        <version>1.4</version>
+        <executions>
+            <execution>
+                <goals>
+                    <goal>test</goal>
+                </goals>
+            </execution>
+        </executions>
+        <configuration>
+            <storyType>html</storyType>
+            <storyReport>target/easyb/easyb.html</storyReport>
+            <easybTestDirectory>src/test/stories</easybTestDirectory>
+            <parallel>true</parallel>
+            <jvmArguments>
+                <jira.url>http://jira.acme.com</jira.url>
+                <jira.username>${jira.demo.user}</jira.username>
+                <jira.password>${jira.demo.password}</jira.password>
+                <thucydides.public.url>http://localhost:9000</thucydides.public.url>
+            </systemPropertyVariables>
+            </jvmArguments>
+        </configuration>
+    </plugin>
+------------------   
+
+Une fois que ceci est fait, Thucydides mettra automatiquement à jour les entrées JIRA appropriées à chaque fois que les tests seront exécutés.
+
+=== Augmenter la taille des captures d'écran 
+Parfois, la taille par défaut de la fenêtre est trop petite pour afficher tous les écrans de l'application dans les captures. Vous pouvez agrandir la taille de la fenêtre que Thucydides ouvre en fournissant les propriétés système +thucydides.browser.width+ et +thucydides.browser.height+. Par exemple, pour utiliser une fenêtre de navigateur de dimensions 1200x1024, vous devriez faire ce qui suit:
+
+------------------   
+$ mvn clean verify -Dthucydides.browser.width=1200 -Dthucydides.browser.height=1024
+------------------   
+
+Typiquement, le paramètre largeur (width) est le seul que vous aurez besoin d'indiquer, la hauteur étant déterminée par le contenu de la page du navigateur.
+
+Si vous exécutez Thucydides avec JUnit, vous pouvez également indiquer ce paramètre (et n'importe quel autre qui serait concerné) directement dans votre fichier pom.xml, dans la configuration de maven-surefire-plugin configuration, par exemple:
+
+[source,xml]
+------------------   
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.7.1</version>
+            <configuration>
+                <argLine>-Xmx1024m</argLine>
+                <systemPropertyVariables>
+                    <thucydides.browser.width>1200</thucydides.browser.width>
+                </systemPropertyVariables>
+            </configuration>
+        </plugin>
+        ...
+------------------   
+
+Lorsque la largeur du navigateur est supérieure à 1000px, la vue diaporama dans les rapports s'agrandira pour montrer les captures entières.
+
+Notez qu'il existe quelques problèmes avec cette fonctionnalité. En particulier, elle ne fonctionnera pas du tout avec Chrome, car Chrome, par conception, ne gère pas le redimensionnement de la fenêtre. De plus, puisque WebDriver utilise un vrai navigateur, la taille maximum sera limitée par la taille physique du navigateur. Cette limitation s'applique à la largeur du navigateur, étant donné que la longueur verticale totale de l'écran sera toujours enregistrée dans la capture d'écran même si celui-ci dépasse la hauteur d'une seule page via un ascenseur.
+
+==== Captures d'écran et problèmes de dépassement de mémoire
+Selenium a besoin de mémoire pour prendre des captures d'écran, particulièrement si les écrans sont grands. Si Selenium n'a plus de mémoire quand il prend des captures d'écran, il journalise une erreur dans la sortie des tests. Dans ce cas, configurez le maven-surefire-plugin pour utiliser davantage de mémoire, comme illustré ici:
+
+[source,xml]
+------------------   
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>2.7.1</version>
+    <configuration>
+        <argLine>-Xmx1024m</argLine>
+    </configuration>
+</plugin>
+------------------   
+
+== Gérer l'état entre les étapes               
+
+Quelquefois, il peut être utile d'être capable de passer des informations entre les étapes. Par exemple, vous pourriez avoir besoin de vérifier que les informations entrées dans un formulaire d'enregistrement d'un client apparaissent correctement sur une page de confirmation ultérieure.
+
+Vous pouvez faire cela en passant des valeurs d'une étape à l'autre, cependant cela tend à polluer les étapes. Une autre approche consiste à utiliser la session de test Thucydides, qui est en fait un tableau de hachage dans lequel vous pouvez enregistrer des variables pendant un test donnée. Vous pouvez obtenir ce hachage de session en utilisant la méthode statique +Thucydides.getCurrentSession()+ comme illustré ici:
+
+[source,java]
+------------------
+@Step
+public void notes_publication_name_and_date() {
+    PublicationDatesPage page = pages().get(PublicationDatesPage.class);
+    String publicationName = page.getPublicationName();
+    DateTime publicationDate = page.getPublicationDate();
+
+    Thucydides.getCurrentSession().put("publicationName", publicationName);
+    Thucydides.getCurrentSession().put("publicationDate", publicationDate);
+}
+------------------
+
+Puis, dans une étape invoquée ultérieurement dans le test, vous pouvez contrôler les valeurs sauvegardées dans la session:
+
+[source,java]
+-------------------
+public void checks_publication_details_on_confirmation_page() {
+
+    ConfirmationPage page = pages().get(ConfirmationPage.class);
+
+    String selectedPublicationName = (String) Thucydides.getCurrentSession().get("publicationName");
+    DateTime selectedPublicationDate = (DateTime) Thucydides.getCurrentSession().get("publicationDate");
+
+    assertThat(page.getPublicationDate(), is(selectedPublicationName));
+    assertThat(page.getPublicationName(), is(selectedPublicationDate));
+
+}
+-------------------
+
+Si aucune variable correspondant au nom demandé n'est trouvée, le test échouera. La session de testée est nettoyée au début de chaque test.
+
+== Test dirigé par les données
+
+=== Tests dirigés par les données en JUnit
+
+Avec JUnit 4, vous pouvez utiliser le lanceur de test Parameterized pour exécuter des tests dirigés par les données. Dans Thucydides, vous utilisez +ThucydidesParameterizedRunner+. Ce lanceur est très semblable au lanceur de tests JUnit Parameterized, excepté que vous utilisez l'annotation TestData pour fournir les données de test et que vous pouvez utiliser toutes les autres annotations Thucydides (+@Managed+, +@ManagedPages+, +@Steps+, etc.). Ce lanceur de tests générera également des rapports spécifiques Thucydides HTML et XML pour les tests exécutés.
+
+Un exemple de test Thucydides dirigé par les données est montré ci-dessous. Dans ce test, vous vérifiez que des valeurs correctes d'age et de couleurs préférées sont acceptées sur la page d'une application (imaginaire). Pour tester cela, nous utilisons plusieurs combinaisons d'ages et de couleurs préférées indiquées par la méthode testData(). Ces valeurs sont représentées comme des variables d'instance dans la classe de test st instanciées via le constructeur. 
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+public class WhenEnteringPersonalDetails {
+
+    @TestData
+    public static Collection<Object[]> testData() {
+        return Arrays.asList(new Object[][]{
+                {25, "Red"},
+                {40, "Blue"},
+                {36, "Green"},
+        });
+    }
+
+    @Managed
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://www.myapp.com")
+    public Pages pages;
+
+    @Steps
+    public SignupSteps signup;
+
+    private Integer age;
+    private String favoriteColor;
+
+    public WhenEnteringPersonalDetails(Integer age, String favoriteColor) {
+        this.age = age;
+        this.favoriteColor = favoriteColor;
+    }
+
+    @Test 
+    public void valid_personal_details_should_be_accepted() {
+        signup.navigateToPersonalDetailsPage();
+        signup.enterPersonalDetails(age, favoriteColor);
+    }  
+}
+--------------
+
+=== Génération de rapport sur des tests web dirigés par les données
+
+Quand vous générez des rapports sur des tests web dirigés par les données, ces rapports affichent la totalité des sorties et des captures d'écran pour chaque série de données. Un rapport global des histoires pour les tests dirigés par les données, avec un cas de test pour chaque ligne des données de test. Les données de test utilisées pour chaque test sont affichées dans le rapport.
+   
+=== Exécuter des tests dirigés par les données en parallèle 
+
+Les tests web dirigés par les données peuvent être long, spécialement si vous devez naviguer dans une page particulière avant de tester une valeur de champ différente à chaque fois. Dans la plupart des cas, cependant, ceci est nécessaire car il n'est pas sûr de faire des suppositions sur l'état d'une page web après un test dirigé par les données précédemment effectué. Un moyen efficace de les accélérer, cependant, consiste à les exécuter en parallèle. Vous pouvez configurer +ThucydidesParameterizedRunner+ pour que les tests s'exécutent en parallèle en utilisant l'annotation Concurrent.
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+@Concurrent
+public class WhenEnteringPersonalDetails {...
+-----------------
+
+Par défaut, ceci exécutera les tests de manière concurrente, en utilisant deux proccessus par coeur CPU. Si vous voulez régler finement le nombre de processus utilisés, vous pouvez le faire en précisant la propriété d'annotation 'threads'.
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+@Concurrent(threads="4")
+public class WhenEnteringPersonalDetails {...
+--------------
+
+Vous pouvez également exprimer cela comme valeur relative au nombre de processeurs disponibles. Par exemple, pour exécuter 4 processus par CPU, vous pourriez indiquer ce qui suit:
+
+[source,java]
+------------------   
+@RunWith(ThucydidesParameterizedRunner.class)
+@Concurrent(threads="4x")
+public class WhenEnteringPersonalDetails {...
+---------
+
+=== Tests dirigés par les données en utilisant des fichiers CSV
+
+Thucydides vous permet d'effectuer des tests dirigés par les données en utilisant des données de test dans un fichier CSV. Vous enregistrez vos données de test dans un fichier CSV (par défaut avec des colonnes séparées par des virgules) et dont la première ligne se comporte comme un en-tête:
+
+---------------
+	NAME,AGE,PLACE OF BIRTH
+	Jack Smith, 30, Smithville
+	Joe Brown, 40, Brownville
+	Mary Williams, 20, Williamsville
+---------------
+
+Ensuite, créez une classe de test contenant les propriétés qui correspondent aux colonnes des données de test. Chaque propriété doit être une propriété au sens JavaBean, avec un getter et un setter correspondant. La classe de test contiendra typiquement un ou plusieurs tests qui utiliseront ces propriétés comme paramètre pour l'étape de test ou les méthodes de l'objet page.
+
+La classe contiendra également l'annotation *@UseTestDataFrom* pour indiquer où trouver le fichier CSV (celui-ci peut être soit un fichier dans le classpath, soit un chemin de fichier relatif ou absolu - mettre la série de données dans le classpath (par exemple dans +src/test/resources+) rend les tests davantage portables). Vous pouvez également utiliser l'annotation *@RunWith* ou tout autre annotation Thucydides usuelle (+@Managed+, +@ManagedPages+ et +@Steps+). 
+
+Un exemple de ce type de classe est montré ici:
+
+[source,java]
+------------------   
+	@RunWith(ThucydidesParameterizedRunner.class)
+	@UseTestDataFrom("test-data/simple-data.csv")
+	public class SampleCSVDataDrivenScenario {
+
+	    private String name;
+	    private String age;
+	    private String placeOfBirth;
+
+	    public SampleCSVDataDrivenScenario() {
+	    }
+
+	    @Qualifier
+	    public String getQualifier() {
+	        return name;
+	    }
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+
+	    @Steps
+	    public SampleScenarioSteps steps;
+
+	    @Test
+	    public void data_driven_test() {
+	        System.out.println(getName() + "/" + getAge() + "/" + getCity());
+	    }
+
+	    public String getName() {
+	        return name;
+	    }
+
+	    public void setName(String name) {
+	        this.name = name;
+	    }
+
+	    public String getAge() {
+	        return age;
+	    }
+
+	    public void setAge(String age) {
+	        this.age = age;
+	    }
+
+	    public String getPlaceOfBirth() {
+	        return placeOfBirth;
+	    }
+
+	    public void setPlaceOfBirth(String placeOfBirth) {
+	        this.placeOfBirth = placeOfBirth;
+	    }
+	}
+---------
+
+Chaque ligne de données de test nécessite d'être distinguée dans les rapports générés. Par défaut, Thucydides appellera la méthode +toString()+. Si vous fournissez une méthode publique retournant une chaîne et annotée par +@Qualifier+, c'est cette méthode qui sera utilisée pour distinguer les séries de données. Elle doit renvoyer une valeur unique pour chacune des séries de données.
+
+Le lanceur de tests créera une nouvelle instance de cette classe pour chaque ligne de données du fichier CSV, affectant les propriétés aux valeurs correspondantes des données de test. Ainsi, quand nous exécuterons ce test, nous obtiendrons une sortie telle que celle-ci:
+
+---------------
+	Jack Smith/30/Smithville
+	Joe Brown/40/Brownville
+	Mary Williams/20/Williamsville
+---------------
+
+Il y a quelques points à noter. Les colonnes du fichier CSV sont converties en nom de propriété en Camel Case (ainsi, "NAME" devient +name+ et "PLACE OF BIRTH" devient +placeOfBirth+). Puisque nous testons des applications web, tous les champs devraient être des chaînes de caractères.
+
+Si certaines des valeurs de champ contiennent des virgules, vous devrez utiliser un séparateur différent. Vous pouvez utiliser l'attribut *separator* de l'annotation *@UseTestDataFrom* pour indiquer ce séparateur alternatif. Par exemple, les données suivantes utilisent un point-virgule comme séparateur:
+
+-----------
+    NAME;AGE;ADDRESS
+    Joe Smith; 30; 10 Main Street, Smithville
+    Jack Black; 40; 1 Main Street, Smithville
+    Mary Williams, 20, 2 Main Street, Williamsville
+------------
+
+Pour exécuter nos tests avec ces données, nous devrons utiliser une classe de test telle que la suivante:
+
+[source,java]
+------------------   
+	@RunWith(ThucydidesParameterizedRunner.class)
+	@UseTestDataFrom(value="test-data/simple-semicolon-data.csv", separator=';')
+	public class SampleCSVDataDrivenScenario {
+
+	    private String name;
+	    private String age;
+	    private String address;
+
+	    public SampleCSVDataDrivenScenario() {
+	    }
+
+	    @Qualifier
+	    public String getQualifier() {
+	        return name;
+	    }
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+
+	    @Steps
+	    public SampleScenarioSteps steps;
+
+	    @Test
+	    public void data_driven_test() {
+	        System.out.println(getName() + "/" + getAge() + "/" + getAddress());
+	    }
+
+	    public String getName() {
+	        return name;
+	    }
+
+	    public void setName(String name) {
+	        this.name = name;
+	    }
+
+	    public String getAge() {
+	        return age;
+	    }
+
+	    public void setAge(String age) {
+	        this.age = age;
+	    }
+
+	    public String getAddress() {
+	        return address;
+	    }
+
+	    public void setAddress(String address) {
+	        this.address = address;
+	    }
+	}
+------------
+
+Ceci produira une sortie telle que celle-ci:
+
+-------------
+	Joe Smith/30/10 Main Street, Smithville
+	Jack Black/40/1 Main Street, Smithville
+	Mary Williams/20/2 Main Street, Williamsville
+-------------
+
+Le support d'Excel sera ajouté dans une future version. Cependant, si vous enregistrez vos données sous forme CSV, il devient facile de suivre les modifications des données de test dans votre système de contrôle de version.
+
+=== Utiliser des tests dirigés par les données pour des étapes individuelles
+
+Parfois, vous voulez utiliser le test dirigé par les données au niveau d'une étape, plutôt qu'au niveau du test. Par exemple, vous pourriez vouloir naviguer dans un écran donné de l'application puis essayer différentes combinaisons de données ou boucler sur une séquence d'étapes avec des données provenant d'un fichier CSV. Ceci évite d'avoir à réouvrir le navigateur à chaque ligne de données.
+
+Vous pouvez faire cela en ajoutant des valeurs de propriété à vos fichiers d'étapes. Considérez le fichier d'étapes suivant:
+
+[source,java]
+------------------   
+	public class SampleDataDrivenSteps extends ScenarioSteps {
+
+	    public SampleDataDrivenSteps(Pages pages) {
+	        super(pages);
+	    }
+
+	    private String name;
+	    private String age;
+	    private String address;
+
+	    public void setName(String name) {
+	        this.name = name;
+	    }
+
+	    public void setAge(String age) {
+	        this.age = age;
+	    }
+
+	    public void setAddress(String address) {
+	        this.address = address;
+	    }
+
+	    @StepGroup
+	    public void enter_new_user_details() {
+	        enter_name_and_age(name, age);
+	        enter_address(address);
+	    }
+
+	    @Step
+	    public void enter_address(String address) {
+	        ...
+	    }
+
+	    @Step
+	    public void enter_name_and_age(String name, String age) {
+	        ...
+	    }
+	
+		@Step
+		public void navigate_to_user_accounts_page() {
+			...
+		}
+	}
+--------------
+
+Le groupe d'étapes +enter_personal_details+ utilise les champs étape pour exécuter les étapes +enter_name_and_age+ et +enter_address+. Nous voulons récupérer ces données depuis un fichier CSV et boucler sur l'étape *enter_personal_details* pour chaque ligne de données.
+
+Nous faisons cela en utilisant la méthode +withTestDataFrom()+ de la classe *StepData*:
+
+[source,java]
+------------------   
+	import net.thucydides.core.annotations.ManagedPages;
+	import net.thucydides.core.annotations.Steps;
+	import net.thucydides.core.pages.Pages;
+	import net.thucydides.junit.annotations.Managed;
+	import net.thucydides.junit.runners.ThucydidesRunner;
+	import org.junit.Test;
+	import org.junit.runner.RunWith;
+	import org.openqa.selenium.WebDriver;
+
+	import static net.thucydides.core.steps.StepData.withTestDataFrom;
+
+	@RunWith(ThucydidesRunner.class)
+	public class SamplePassingScenarioWithTestSpecificData {
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+    
+	    @Steps
+	    public SampleDataDrivenSteps steps;
+
+
+	    @Test
+	    public void happy_day_scenario() throws Throwable {
+			steps.navigate_to_user_accounts_page();
+	        withTestDataFrom("test-data/simple-data.csv").run(steps).enter_new_user_details();
+	    }
+	}
+--------------
+
+Ceci va appeler +data_driven_test_step()+ plusieurs fois, injectant à chaque fois des données dans l'étape depuis le fichier +test-data/simple-data.csv+.
+
+Vous pouvez également utiliser autant de fichiers que vous le souhaitez, y compris pour un même test. Vous pouvez également utiliser le même fichier de données pour plus d'une étape de test. Rappelez-vous que seules les propriétés correspondant aux colonnes du fichier CSV seront instanciées - les autres seront ignorées:
+
+[source,java]
+------------------   
+	@RunWith(ThucydidesRunner.class)
+	public class SamplePassingScenarioWithTestSpecificData {
+
+	    @Managed
+	    public WebDriver webdriver;
+
+	    @ManagedPages(defaultUrl = "http://www.google.com")
+	    public Pages pages;
+
+	    @Steps
+	    public SampleDataDrivenSteps steps;
+
+	    @Steps
+	    public DifferentDataDrivenSteps different_steps;
+
+
+	    @Test
+	    public void happy_day_scenario() throws Throwable {
+			steps.navigate_to_user_accounts_page();
+
+	        withTestDataFrom("test-data/simple-data.csv").run(steps).enter_new_user_details();
+
+	        withTestDataFrom("test-data/some_other-data.csv").run(different_steps).enter_other_details();
+	    }
+	}
+-------------------
+
+Notez que, comme raccourci, vous pouvez omettre les méthodes setters et ne déclarer que les champs nécessaires comme publics. De cette façon, la classe d'étapes montré ci-dessus pourra être réécrite comme suit:
+
+[source,java]
+------------------   
+	public class SampleDataDrivenSteps extends ScenarioSteps {
+
+	    public SampleDataDrivenSteps(Pages pages) {
+	        super(pages);
+	    }
+
+	    public String name;
+	    public String age;
+	    public String address;
+
+	    @StepGroup
+	    public void enter_new_user_details() {
+	        enter_name_and_age(name, age);
+	        enter_address(address);
+	    }
+
+	    @Step
+	    public void enter_address(String address) {
+	        ...
+	    }
+
+	    @Step
+	    public void enter_name_and_age(String name, String age) {
+	        ...
+	    }
+
+		@Step
+		public void navigate_to_user_accounts_page() {
+			...
+		}
+	}
+-------------------
+
+== Exécuter les tests Thucydides dans des batches parallèles
+
+Les tests web sont de bons candidats pour les tests concurrents, en théorie du moins, mais l'implémentation peut être tordue. Par exemple, bien qu'il soit assez facile de configurer à la fois JUnit et easyb pour exécuter des tests en parallèle, exécuter plusieurs instances webdriver de Firefox en parallèle sur le même affichage, par exemple, à tendance à devenir non fiable. 
+
+La solution naturelle dans ce cas est de diviser les tests web en batches plus petits et d'exécuter chaque batch sur une machine différent et/ou sur des affichages virtuels différents. Quand chaque batch est terminé, les résultats peuvent être récupérés et aglomérés dans les rapports de test finaux.
+
+Cependant, séparer les tests en batches à la main à tendance à devenir pénible et non fiable - il est facile d'oublier d'ajouter un nouveau test à un batch, par exemple, ou d'avoir des batches inégalement chargés.
+
+La dernière version de Thucydides vous permet de faire ceci automatiquement en distribuant vos cas de test équitablement dans des batches de taille donnée. En pratique, vous exécutez une tâche de build pour chaque batch. Vous devez indiquer deux paramètres quand vous exécutez chaque build: le nombre total de batches à exécuter (+thucydides.batch.count+) et le numéro du batch exécuté dans ce build (+thucydides.batch.number+).
+
+Par exemple, ce qui suit va diviser les cas de tests en 3 batches (+thucydides.batch.count+) et n'exécutera que le premier test de chaque batch (+thucydides.batch.number+):
+                                     
+------------------
+mvn verify -Dthucydides.batch.count=3 -Dthucydides.batch.number=1
+------------------
+
+Ceci ne fonctionnera qu'avec l'intégration JUnit. Cependant, cette fonctionnalité est également gérée par esayb (à partir de la version 1.5) quoiqu'avec des paramètres différents. Lors de l'utilisation de l'intégration easyb Thucydides, vous devrez également fournir les options équivalentes pour easyb:
+
+------------------
+mvn verify -Deasyb.batch.count=3 -Deasyb.batch.number=1
+------------------
+
+Si vous avez à la fois des tests Thucydides easyb et JUnit, vous devrez indiquer les deux types d'options.
+
+[[further-reading]]
+   
+== Lectures pour aller plus loin
+
+.Articles
+- Dr. Dobb's Journal. http://drdobbs.com/open-source/232300277/[Project of the Month: Thucydides], décembre 2011.              
+- JavaWorld. http://www.javaworld.com/javaworld/jw-08-2011/110823-atdd-for-web-apps.html[Acceptance test driven development for web applications], août 2011.  
+- JavaWorld. http://www.javaworld.com/javaworld/jw-10-2011/111018-thucydides-for-atdd.html[Selenium 2 and Thucydides for ATDD], août 2011.              
