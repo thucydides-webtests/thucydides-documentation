@@ -2079,7 +2079,148 @@ If a test needs to be associated with several issues, you can use the @Issues an
 
 When you do this, issues will appear in the Thucydides reports with a hyperlink to the corresponding issue in your issue tracking system. 
 
-jira-integration-example
+## Overriding the default reports directory
+
+By default, Thucydides generates it's reports in the `target/site/thucydides` directory. There are a couple of ways to override this, if need be. First of all, if you are overriding the default Maven output directory, you can override the `<directory>` element in the `<build>` section of your `pom.xml` file. However, since the Maven Surefire plugin runs the tests in a forked JVM by default, you will also need to pass in the `project.build.directory` property to the unit tests by using the `<systemPropertyVariables>` configuration element, as shown here:
+
+[source,xml]
+------------------ 
+     ...
+    <build>
+        <directory>${basedir}/build</directory>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.11</version>
+                <configuration>
+                    <includes>
+                        <include>**/*TestScenario.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <project.build.directory>${project.build.directory}</project.build.directory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.thucydides.maven.plugins</groupId>
+                <artifactId>maven-thucydides-plugin</artifactId>
+                <version>${thucydides.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+------------------ 
+
+This will result in the Thucydides reports being generated in `build/site/thucydides` instead of `target/site/thucydides'.
+
+If you only want to override the Thucydides output directory, you can use the `thucydides.outputDirectory` and `thucydides.sourceDirectory` properties, either in the `pom.xml` file, or from the commnd line. For example, the following properties will generate the Thucydides reports in the `build/thucydides-reports` directory:
+
+    <properties>
+        <thucydides.outputDirectory>${basedir}/build/thucydides-reports</thucydides.outputDirectory>
+        <thucydides.sourceDirectory>${basedir}/build/thucydides-reports</thucydides.sourceDirectory>
+    </properties>
+
+
+== Using Thucydides tags
+
+Viewing test results is certainly useful, but, from a release and deployment point of view, it is just scratching the surface. Even more interesting is the ability to view test results in terms of stories, features, behaviors, scenarios, or whatever other categorizations you find useful. 
+
+Thucydides Tags provide a very flexible mechanism for categorizing and reporting on your test results, which serve as an alternative to the Story/Feature structure described earlier. You can decide on an appropriate set of tag types (such as "feature", "behavior", "epic", "scenario", "non-functional requirement", etc.), and then assign tags of the different types to your tests. To declare a tag type, you simply use a tag of the specified type - it will then automatically appear in the Thucydides reports.
+
+You can assign a tag manually to a test using the `@WithTag` annotation:
+
+
+[source,java]
+------------------ 
+    @WithTag(name="important functionality", type = "functionality")
+    class SomeTestScenarioWithTags {
+        @Test
+        public void a_simple_test_case() {
+        }
+
+        @WithTag(name="simple story",type = "story")
+        @Test
+        public void should_do_this() {
+        }
+
+        @Test
+        public void should_do_that() {
+        }
+    }
+------------------ 
+
+Note that tags can be assigned at the test or the class level. Tag names and types are free text -
+
+=== Writing a Thucydides tags plugin
+
+Thucydides tags are easy to integrate with other applications, such as issue tracking or agile project management systems. In this section, we look at how to write a plugin that will let Thucydides automatically assign tags to your tests, based on your specific requirements.
+
+In Thucydides, tags are arbitrary tuples of String values (name and type), represented by the `TagType` class. You can create a tag using the `TagTest.withName()` method, as shown here:
+
+[source,java]
+------------------ 
+  TestTag specialFeatureTag = TestTag.withName("special feature").andType("feature");
+------------------ 
+
+Any feature types you provide will be displayed as separate tabs at the top of the reports screen, and will provide all of the usual aggregation and filtering features that come with the standard reports.
+
+  
+To define your own tags, you need to write your own tag provider, by implementing the TagProvider interface, shown below: 
+
+[source,java]
+------------------ 
+  public interface TagProvider {
+      Set<TestTag> getTagsFor(final TestOutcome testOutcome);
+  }
+------------------ 
+
+The unique method of this interface, `getTagsFor()`, takes a `TestOutcome` object, and returns the set of tags associated with this test outcome. The `TestOutcome` class provides a large number of fields describing the test and it's results. For example, to obtain the list of the issues specified for this test using the `getIssues()` method. The following code is an example of a tag provider that provides a list of tags based on the test's associated issues (specified by the `@Issue` and `@Issues` annotations).
+
+[source,java]
+------------------ 
+  import ch.lambdaj.function.convert.Converter;
+  import net.thucydides.core.model.TestOutcome;
+  import net.thucydides.core.model.TestTag;
+  import java.util.Set;
+  import static ch.lambdaj.Lambda.convert;
+
+  public class IssueBasedTagProvider implements TagProvider {
+      
+      public IssueBasedTagProvider() {
+      }
+
+      public Set<TestTag> getTagsFor(final TestOutcome testOutcome) {
+
+          Set<String> issues = testOutcome.getIssues();
+          return Sets.newHashSet(convert(issues, toTestTags()));
+      }
+
+      private Converter<String, String> toTestTags() {
+          return new Converter<Object, TestTag>() {
+
+              @Override
+              public TestTag convert(String issue) {
+                  String tagName = getNameForTag(issue);
+                  String tagType = getTypeForTag(issue);
+                  return TestTag.withName(tagName).andType(tagType);
+              }
+          };
+      }
+
+      String getNameForTag(String issue) {...}
+      String getTypeForTag(String issue) {...}
+  }
+------------------ 
+
+You also need to provide a service definition in the `/META-INF/services` folder on the classpath, so that Thucydides can register and use your plugin. A simple way to do this is to create a Maven project with a file called `net.thucydides.core.statistics.service.TagProvider` in the `src/resources/META-INF/sevices` folder. This file is a text file containing the fully-qualified name of your tag provider, e.g.
+
+[source,java]
+------------------ 
+  com.mycompany.thucydides.MyThucydidesTagProvider
+------------------ 
+
+Now just include the generated JAR file in your dependencies, and Thucydides will use it automatically to include your custom tags in the reports.
+
 
 === Bi-directional JIRA integration
   
