@@ -1397,7 +1397,7 @@ public class NewCompanyPage extends PageObject {
 
 When writing acceptance tests, you often find yourself expressing expectations about individual domain objects or collections of domain objects. For example, if you are testing a multi-criteria search feature, you will want to know that the application finds the records you expected. You might be able to do this in a very precise manner (for example, knowing exactly what field values you expect), or you might want to make your tests more flexible by expressing the ranges of values that would be acceptable. Thucydides provides a few features that make it easier to write acceptance tests for this sort of case.
 
-In the rest of this section, we will study some examples based on tests for the Maven Central search site (see <<>>). This site lets you search the Maven repository for Maven artifacts, and view the details of a particular artifact.
+In the rest of this section, we will study some examples based on tests for the Maven Central search site (see <<maven-search-report>>). This site lets you search the Maven repository for Maven artifacts, and view the details of a particular artifact.
      
 [[maven-search-report]]
 .The results page for the Maven Central search page
@@ -1996,7 +1996,7 @@ Thucydides also provides special support for the Atlassian JIRA issue tracking t
 org.apache.maven.pluginsmaven-surefire-plugin2.7.1http://my.jira.server
 ------------------   
 
-You need to provide the issue number. You can place this in the test title, prefixed by the '#' character. For easyb tests, this just means mentioning the issue number (always starting with a '#' character) somewhere in the scenario name. For JUnit tests, you use the @Title annotation as shown here:
+You need to provide the issue number. You can place this in the test title, prefixed by the # character. For easyb tests, this just means mentioning the issue number (always starting with a # character) somewhere in the scenario name. For JUnit tests, you use the @Title annotation as shown here:
 
 [source,java]
 ------------------   
@@ -2070,7 +2070,7 @@ If a test needs to be associated with several issues, you can use the @Issues an
 
 [source,java]
 ------------------   
-@Issues({"#123", #456"}) 
+@Issues({"#123", "#456"}) 
 @Test public void shopping_cart_should_let_users_add_multiple_articles() { 
     steps.add_item_to_cart("nuts"); steps.add_item_to_cart("bolts"); 
 	steps.cart_should_contain("nuts","bolts"); 
@@ -2079,6 +2079,7 @@ If a test needs to be associated with several issues, you can use the @Issues an
 
 When you do this, issues will appear in the Thucydides reports with a hyperlink to the corresponding issue in your issue tracking system. 
 
+<<<<<<< HEAD
 ## Overriding the default reports directory
 
 By default, Thucydides generates it's reports in the `target/site/thucydides` directory. There are a couple of ways to override this, if need be. First of all, if you are overriding the default Maven output directory, you can override the `<directory>` element in the `<build>` section of your `pom.xml` file. However, since the Maven Surefire plugin runs the tests in a forked JVM by default, you will also need to pass in the `project.build.directory` property to the unit tests by using the `<systemPropertyVariables>` configuration element, as shown here:
@@ -2220,6 +2221,8 @@ You also need to provide a service definition in the `/META-INF/services` folder
 ------------------ 
 
 Now just include the generated JAR file in your dependencies, and Thucydides will use it automatically to include your custom tags in the reports.
+=======
+>>>>>>> 73b354ab3dc51b06e501c4dba78648df33e8612c
 
 
 === Bi-directional JIRA integration
