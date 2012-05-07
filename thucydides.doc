@@ -1011,6 +1011,28 @@ public class FindAJobPage extends PageObject {
 }
 ---------------------
 
+You can use an even more fluent style of expressing the implementation steps by using  methods like +find+, +findBy+ , +then+ and +waitFor+ etc. For example, you can use webdriver "By" finders as follows:
+
+[source,java]
+---------------------
+page.find(By.name("demo")).then(By.name("specialField")).getValue();
+---------------------
+
+or
+
+[source,java]
+---------------------
+page.findBy("#demo").then("#specialField").getValue();
+---------------------
+
+The method +waitFor+ and its derivatives +waitForPresenceOf+ and +waitForAbsenceOf+ offer more concise and expressive alternatives to the +wait+ methods. These methods take a String argument representing the xpath or css selector and can be used as follows:
+
+[source,java]
+---------------------
+page.waitFor("#city");
+page.waitForPresenceOf("#firstname");
+---------------------
+
 === Using pages in a step library
  
 When you need to use a page object in one of your steps, you just ask for one from the Page factory, providing the class of the page object you need, e.g.
