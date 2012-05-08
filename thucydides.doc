@@ -1011,7 +1011,7 @@ public class FindAJobPage extends PageObject {
 }
 ---------------------
 
-You can use an even more fluent style of expressing the implementation steps by using  methods like +find+, +findBy+ , +then+ and +waitFor+ etc. 
+You can use an even more fluent style of expressing the implementation steps by using  methods like +find+, +findBy+  and +then+. 
 
 For example, you can use webdriver "By" finders with element name, id, css selector or xpath selector as follows:
 
