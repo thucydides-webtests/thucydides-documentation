@@ -990,7 +990,7 @@ public class FindAJobPage extends PageObject {
 }
 ---------------------
 
-La méthode +typeInfo+ est un raccourci qui se contente d'effacer un champ et d'y entrer le texte indiqué. Si vous préférez un style davantage orienté API, vous pouvez également faire quelque chose comme ça:
+La méthode +typeInto+ est un raccourci qui se contente d'effacer un champ et d'y entrer le texte indiqué. Si vous préférez un style davantage orienté API, vous pouvez également faire quelque chose comme ça:
 
 [source,java]
 ---------------------
@@ -1996,9 +1996,19 @@ Pour faire cela dans Maven, vous devez passer la propriété système à JUnit e
 
 Thucydides fournit également un support spécial pour l'outil de suivi de bug JIRA de Atlassian. Si vous fournissez la propriété système +jira.url+ au lieu de +jira.url+ +thucydides.issue.tracker.url+, vous n'avez besoin de fournir que l'URL de base de votre instance JIRA et pas le chemin complet:
 
+[source,xml]
 ------------------
-org.apache.maven.pluginsmaven-surefire-plugin2.7.1http://my.jira.server
-------------------   
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>2.7.1</version>
+    <configuration>
+        <systemPropertyVariables>
+            <jira.url>http://my.jira.server</jira.url>
+        </systemPropertyVariables>
+    </configuration>
+</plugin> 
+------------------ 
 
 Vous devez fournir le numéro d'entrée. Vous pouvez le mettre dans le titre du test en le préfixant avec le caractère #. Pour les tests easyb, cela implique simplement de mentionner le numéro d'entrée  (toujours en commençant par un caractère #) quelque part dans le nom du scénario. Pour les tests JUnit, vous utiliserez l'annotation @Title comme illustré ici:
 

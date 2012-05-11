@@ -986,7 +986,7 @@ public class FindAJobPage extends PageObject {
 }
 ---------------------
 
-The +typeInfo+ method is a shorthand that simply clears a field and enters the specified text. If you prefer a more fluent-API style, you can also do something like this:
+The +typeInto+ method is a shorthand that simply clears a field and enters the specified text. If you prefer a more fluent-API style, you can also do something like this:
 
 [source,java]
 ---------------------
@@ -1009,6 +1009,28 @@ public class FindAJobPage extends PageObject {
 	    return extract(tabs, on(WebElement.class).getText());
 	}
 }
+---------------------
+
+You can use an even more fluent style of expressing the implementation steps by using  methods like +find+, +findBy+  and +then+. 
+
+For example, you can use webdriver "By" finders with element name, id, css selector or xpath selector as follows:
+
+[source,java]
+---------------------
+page.find(By.name("demo")).then(By.name("specialField")).getValue();
+
+page.find(By.cssSelector(".foo")).getValue();
+
+page.find(By.xpath("//th")).getValue();
+---------------------
+
+You can also use +findBy+ method and pass the css or xpath selector directly. For example,
+
+[source,java]
+---------------------
+page.findBy("#demo").then("#specialField").getValue(); //css selectors
+
+page.findBy("//div[@id='dataTable']").getValue(); //xpath selector
 ---------------------
 
 === Using pages in a step library
@@ -1319,12 +1341,44 @@ If the element does not appear immediately, you can wait for it to appear:
 indexPage.waitForRenderedElements(By.xpath("//h2[.='A title that is not immediately visible']"));
 ----------------------
 
-You can also wait for an element to disappear:
+An alternative to the above syntax is to use the more fluid +waitFor+ method which takes a css or xpath selector as argument:
+
+[source,java]
+---------------------
+indexPage.waitFor("#popup"); //css selector
+
+indexPage.waitFor("//h2[.='A title that is not immediately visible']"); //xpath selector
+---------------------
+
+If you just want to check if the element is present though not necessarily visible, you can use +waitForRenderedElementsToBePresent+ :
+
+[source,java]
+----------------------
+indexPage.waitForRenderedElementsToBePresent(By.xpath("//h2[.='A title that is not immediately visible']"));
+----------------------
+
+or its more expressive flavour, +waitForPresenceOf+ which takes a css or xpath selector as argument.
+
+[source,java]
+---------------------
+indexPage.waitForPresenceOf("#popup"); //css
+
+indexPage.waitForPresenceOf("//h2[.='A title that is not immediately visible']"); //xpath
+---------------------
+  
+
+You can also wait for an element to disappear by using +waitForRenderedElementsToDisappear+ or +waitForAbsenceOf+ :
 
 [source,java]
 ----------------------
 indexPage.waitForRenderedElementsToDisappear(By.xpath("//h2[.='A title that will soon disappear']"));
+
+indexPage.waitForAbsenceOf("#popup");
+
+indexPage.waitForAbsenceOf("//h2[.='A title that will soon disappear']");
 ----------------------
+
+
 
 For simplicity, you can also use the +waitForTextToAppear+ and +waitForTextToDisappear+ methods:
 
@@ -1992,8 +2046,18 @@ To do this in Maven, you need to pass this system property to JUnit using the ma
                           
 Thucydides also provides special support for the Atlassian JIRA issue tracking tool. If you provide the +jira.url+ system property instead of the +thucydides.issue.tracker.url+, you only need to provide the base URL for your JIRA instance, rather than the full path:
 
+[source,xml]
 ------------------
-org.apache.maven.pluginsmaven-surefire-plugin2.7.1http://my.jira.server
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <version>2.7.1</version>
+    <configuration>
+        <systemPropertyVariables>
+            <jira.url>http://my.jira.server</jira.url>
+        </systemPropertyVariables>
+    </configuration>
+</plugin> 
 ------------------   
 
 You need to provide the issue number. You can place this in the test title, prefixed by the # character. For easyb tests, this just means mentioning the issue number (always starting with a # character) somewhere in the scenario name. For JUnit tests, you use the @Title annotation as shown here:
