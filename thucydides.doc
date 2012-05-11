@@ -1011,6 +1011,28 @@ public class FindAJobPage extends PageObject {
 }
 ---------------------
 
+You can use an even more fluent style of expressing the implementation steps by using  methods like +find+, +findBy+  and +then+. 
+
+For example, you can use webdriver "By" finders with element name, id, css selector or xpath selector as follows:
+
+[source,java]
+---------------------
+page.find(By.name("demo")).then(By.name("specialField")).getValue();
+
+page.find(By.cssSelector(".foo")).getValue();
+
+page.find(By.xpath("//th")).getValue();
+---------------------
+
+You can also use +findBy+ method and pass the css or xpath selector directly. For example,
+
+[source,java]
+---------------------
+page.findBy("#demo").then("#specialField").getValue(); //css selectors
+
+page.findBy("//div[@id='dataTable']").getValue(); //xpath selector
+---------------------
+
 === Using pages in a step library
  
 When you need to use a page object in one of your steps, you just ask for one from the Page factory, providing the class of the page object you need, e.g.
@@ -1319,12 +1341,44 @@ If the element does not appear immediately, you can wait for it to appear:
 indexPage.waitForRenderedElements(By.xpath("//h2[.='A title that is not immediately visible']"));
 ----------------------
 
-You can also wait for an element to disappear:
+An alternative to the above syntax is to use the more fluid +waitFor+ method which takes a css or xpath selector as argument:
+
+[source,java]
+---------------------
+indexPage.waitFor("#popup"); //css selector
+
+indexPage.waitFor("//h2[.='A title that is not immediately visible']"); //xpath selector
+---------------------
+
+If you just want to check if the element is present though not necessarily visible, you can use +waitForRenderedElementsToBePresent+ :
+
+[source,java]
+----------------------
+indexPage.waitForRenderedElementsToBePresent(By.xpath("//h2[.='A title that is not immediately visible']"));
+----------------------
+
+or its more expressive flavour, +waitForPresenceOf+ which takes a css or xpath selector as argument.
+
+[source,java]
+---------------------
+indexPage.waitForPresenceOf("#popup"); //css
+
+indexPage.waitForPresenceOf("//h2[.='A title that is not immediately visible']"); //xpath
+---------------------
+  
+
+You can also wait for an element to disappear by using +waitForRenderedElementsToDisappear+ or +waitForAbsenceOf+ :
 
 [source,java]
 ----------------------
 indexPage.waitForRenderedElementsToDisappear(By.xpath("//h2[.='A title that will soon disappear']"));
+
+indexPage.waitForAbsenceOf("#popup");
+
+indexPage.waitForAbsenceOf("//h2[.='A title that will soon disappear']");
 ----------------------
+
+
 
 For simplicity, you can also use the +waitForTextToAppear+ and +waitForTextToDisappear+ methods:
 
