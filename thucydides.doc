@@ -801,6 +801,19 @@ public class WorkWithBackendTest {
 
 === Adding tags to test cases
 
+You can add arbitrary tags to your tests both in junit and easyb. Tags provide context to your tests in reports. A tag has two parts - a +type+ and a +name+. Thucydides categorizes your tests based on the specified tag types. By default, a +story+ tag type is automatically added to each test. An example of tags on Thucydides reports is given in <<fig-tags-in-reports>>
+
+[[fig-tags-in-report]]
+.Tag types appear on top. Each tag type displays the tag names.
+image::figs/tags-in-reports.png[scaledwidth="80%", width=800]
+
+ 
+
+
+
+
+
+
 === Running Thucydides in different browsers
 
 Thucydides supports all browser-based WebDriver drivers, i.e. Firefox, Internet Explorer and Chrome, as well as HTMLUnit. By default, it will use Firefox. However, you can override this option using the +webdriver.driver+ system property. To set this from the command line, you could do the following:
