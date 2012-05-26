@@ -799,6 +799,8 @@ public class WorkWithBackendTest {
 }
 ----------------             
 
+=== Adding tags to test cases
+
 === Running Thucydides in different browsers
 
 Thucydides supports all browser-based WebDriver drivers, i.e. Firefox, Internet Explorer and Chrome, as well as HTMLUnit. By default, it will use Firefox. However, you can override this option using the +webdriver.driver+ system property. To set this from the command line, you could do the following:
