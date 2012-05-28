@@ -801,16 +801,80 @@ public class WorkWithBackendTest {
 
 === Adding tags to test cases
 
-You can add arbitrary tags to your tests both in junit and easyb. Tags provide context to your tests in reports. A tag has two parts - a +type+ and a +name+. Thucydides categorizes your tests based on the specified tag types. By default, a +story+ tag type is automatically added to each test. An example of tags on Thucydides reports is given in <<fig-tags-in-reports>>
+You can add arbitrary tags to your tests both in junit and easyb. Tags provide context to tests. A tag has two parts - a +type+ and a +name+. Thucydides reports categorize tests based on the specified tag types. 
+
+Tag types are arbitrary and you can add as many types as you wish. By default, a +story+ tag type is automatically added to each test. An example of tags on Thucydides reports is given in <<fig-tags-in-reports>>
 
 [[fig-tags-in-report]]
 .Tag types appear on top. Each tag type displays the tag names.
 image::figs/tags-in-reports.png[scaledwidth="80%", width=800]
 
- 
+==== Adding tags to junit tests
 
+Tags are added to junit tests using +@WithTag+ annotation. The following will add a tag of type +epic+ with name "Audit".
 
+[source,java]
+----------------
+@WithTag(type="epic", name="Audit")
+----------------
 
+If no type is defined, the default tag type is assumed to be +feature+. In other words, the following two tags are equivalent.
+
+[source,java]
+----------------
+@WithTag(type="feature", name="Definition-lookup")
+----------------
+
+[source,java]
+----------------
+@WithTag(name="Definition-lookup")
+----------------
+
++@WithTag+ has an alternative, more concise syntax using a colon (:) to separate the tag type and name. For example,
+
+[source,java]
+----------------
+@WithTag("epic:Audit")
+----------------
+
+or,
+
+[source,java]
+----------------
+@WithTag("feature:Definition-lookup")
+----------------
+
+Multiple tags can be added using +@WithTags+ annotation or it's shorter cousin - +@WithTagValuesOf+. For example,
+
+[source,java]
+----------------
+@WithTags (
+        {
+                @WithTag(name="lookups", type="feature"),
+                @WithTag(name="release-2", type="release")
+
+        }
+)
+----------------
+
+Using +@WithTagValuesOf+, the above can be written more succinctly as: 
+
+[source,java]
+----------------
+@WithTagValuesOf({"lookups", "release:release-2"})
+----------------
+
+==== Adding tags to easyb tests
+
+Tags can be easily added to easyb stories in the form of +thucydides.tests.<type>+ to the stories. For example,
+
+[source,java]
+----------------
+thucydides.tests.feature "history reports"
+thucydides.tests.epic "reporting"
+thucydides.tests.epic "audit"
+thucydides.tests.priority "high"
+----------------
 
 
 
