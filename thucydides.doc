@@ -2800,7 +2800,7 @@ Excel support will be added in a future version. However if you store your test 
 
 === Using data-driven testing for individual steps
 
-Sometimes you want to use data-driven testing at the step level, rather than at the step level. For example, you might want to navigate to a particular screen in the application, and then try many combinations of data, or loop over a sequence of steps with data from a CSV file. This avoids having to reopen the browser for each row of data.
+Sometimes you want to use data-driven testing at the step level, rather than at the test level. For example, you might want to navigate to a particular screen in the application, and then try many combinations of data, or loop over a sequence of steps with data from a CSV file. This avoids having to reopen the browser for each row of data.
 
 You can do this by adding property values to your Step files. Consider the following steps file:
 
