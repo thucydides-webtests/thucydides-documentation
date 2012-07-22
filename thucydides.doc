@@ -1967,6 +1967,8 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *webdriver.base.url*: The default starting URL for the application, and base URL for relative paths.
 
+	* *webdriver.timeouts.implicitlywait*: How long webdriver waits for elements to appear by default, in milliseconds.        
+
 	* *thucydides.outputDirectory*: Where should reports be generated.
 
 	* *thucydides.only.save.failing.screenshots* : Should Thucydides only store screenshots for failing steps? This can save disk space and speed up the tests a little. It is very useful for data-driven testing.
@@ -1981,6 +1983,8 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *thucydides.browser.width* and *thucydides.browser.height*: Resize the browser to the specified dimensions, in order to take larger screenshots. This should work with Internet Explorer and Firefox, but not with Chrome.
 
+	* *thucydides.resized.image.width* : Value in pixels. If set, screenshots are resized to this size. Useful to save space.
+
 	* *thucydides.issue.tracker.url*: The URL used to generate links to the issue tracking system.
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
@@ -1988,6 +1992,8 @@ You typically run Thucydides as part of the build process (either locally or on 
     * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
 
      * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
+
+	* *thucydides.restart.browser.frequency* : Restart the browser every so often during data-driven tests. 
                                  
 An example of using these parameters is shown here:
 
