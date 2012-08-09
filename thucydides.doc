@@ -1,6 +1,6 @@
 = The Thucydides Reference Manual
 John Ferguson Smart
-v1.0.0, January 2012
+v0.9.12, August 2012
 
 :author: John Ferguson Smart
 :data-uri:
@@ -122,7 +122,7 @@ The easiest way to start a new Thucydides project is to use the Maven archetype.
 
 From the command line, you can run *mvn archetype:generate* and then select the *net.thucydides.thucydides-easyb-archetype* archetype from the proposed list of archetypes. Or you can use your favorite IDE to generate a new Maven project using an archetype.
                            
----------------------------
+--------------------------
 $ mvn archetype:generate
 ...
 Define value for property 'groupId': : com.mycompany
@@ -142,7 +142,7 @@ package: com.mycompany
 [INFO] Finished at: Fri Oct 28 07:20:41 NZDT 2011
 [INFO] Final Memory: 7M/81M
 [INFO] ------------------------------------------------------------------------
----------------------------
+--------------------------
 
 This will create a simple Thucydides project, complete with a Page Object, a Step library and two test cases, one using JUnit, and one using easyb. The actual tests run against the online dictionary at Wiktionary.org. Before going any further, take the project for a spin. First, however, you will need to add the +net.thucydides.maven.plugins+ to your plugin groups in your +settings.xml+ file:
 
@@ -193,7 +193,7 @@ Now for the details. the project directory structure is shown here:
 This project is designed to provide a starting point for your Thucydides acceptance tests, and to illustrate some of the basic features. The tests come in two flavors: 'easyb' and 'JUnit'. easyb is a Groovy-based BDD (Behaviour Driven Development) library which works well for this kind of test. The sample easyb story can be found in the +LookupADefinition.story+ file, and looks something like this:
 
 
-------------------
+--------------------------
 using "thucydides"
 
 thucydides.uses_default_base_url "http://en.wiktionary.org/wiki/Wiktionary:Main_Page"
@@ -211,14 +211,14 @@ scenario "Looking up the definition of 'apple'", {
        end_user.should_see_definition_containing_words "A common, round fruit"
     }
 }
--------------------
+--------------------------
 
 A cursory glance at this story will show that it relates a user looking up the definition of the word 'apple'. However only the “what” is expressed at this level – the details are hidden inside the test steps and, further down, inside page objects.
 
 If you prefer pure Java tests, the JUnit equivalent can be found in the +LookupADefinitionStoryTest.java+ file:
 
 
-----------------------
+--------------------------
 @Story(Application.Search.SearchByKeyword.class)
 @RunWith(ThucydidesRunner.class)
 public class LookupADefinitionStoryTest {
@@ -241,13 +241,14 @@ public class LookupADefinitionStoryTest {
 
     }
 }
-----------------------
+--------------------------
+
 As you can see, this is a little more technical but still very high level.
 
 The step libraries contain the implementation of each of the steps used in the high-level tests. For complex tests, these steps can in turn call other steps. The step library used in this example can be found in +EndUserSteps.java+:
 
 
-----------------------  
+--------------------------
 public class EndUserSteps extends ScenarioSteps {
 
 	public EndUserSteps(Pages pages) {
@@ -284,12 +285,12 @@ public class EndUserSteps extends ScenarioSteps {
         onHomePage().open();
     }
 }   
-----------------------  
+--------------------------
 
 Page Objects are a way of encapsulating the implementation details about a particular page. Selenium 2 has particularly good support for page objects, and Thucydides leverages this. The sample page object can be found in the HomePage.java class:
 
 
-----------------------  
+--------------------------
 @DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
 public class SearchPage extends PageObject {
 
@@ -323,12 +324,12 @@ public class SearchPage extends PageObject {
         }
     }
 }
-----------------------  
+--------------------------
 
 The final piece in the puzzle is the +Application.java+ class, which is a way of representing the structure of your requirements in Java form, so that your easyb and JUnit tests can be mapped back to the requirements they are testing:
 
 
-----------------------  
+--------------------------
 	public class Application {
 	    @Feature
 	    public class Search {
@@ -351,7 +352,7 @@ The final piece in the puzzle is the +Application.java+ class, which is a way of
 	        public class EditExistingArticle {}
 	    }
 	}
-----------------------  
+--------------------------
 
 This is what enables Thucydides to generate the aggregate reports about features and stories.
 
@@ -613,24 +614,6 @@ scenario "The administrator adds a new category to the system",
     }
 }   
 ---------------------
-
-[NOTE]
-=====================================================================
-If you are running easyb with Maven 3, there is a Maven (Aether, to be precise) bug which may result in an error along the following lines:
- 
--------------------
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD FAILURE
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time: 8.171s
-[INFO] Finished at: Fri Jul 08 15:33:03 EST 2011
-[INFO] Final Memory: 5M/81M
-[INFO] ------------------------------------------------------------------------
-[ERROR] Failed to execute goal on project jobboard-webtests: Could not resolve dependencies for project net.thucydides.demos:jobboard-webtests:jar:1.0.0-SNAPSHOT: The following artifacts could not be resolved: commons-lang:commons-lang:jar:2.5, ant:ant:jar:1.6.5: Could not find artifact commons-lang:commons-lang:jar:2.5 -> [Help 1]
--------------------
-
-This issue has been fixed in Maven 3.0.4.
-=====================================================================
 
 === Defining high-level tests in JUnit
  
@@ -1267,7 +1250,7 @@ public class HomePage extends PageObject {
 
 When these tests are executed, the JBehave steps combine with the Thucydides steps to create a narrative report of the test results:
 
-[[jbehave-requirements-report]]
+[[thucydides-test-report]]
 .You can see the requirements that you need to implement in the requirements report
 image::figs/thucydides-test-report.png[scaledwidth="80%", width=800]
 
@@ -2643,7 +2626,6 @@ You also need to provide a service definition in the `/META-INF/services` folder
 ------------------ 
 
 Now just include the generated JAR file in your dependencies, and Thucydides will use it automatically to include your custom tags in the reports.
-=======
 
 === Bi-directional JIRA integration
   

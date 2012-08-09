@@ -18,11 +18,11 @@ cp -r images target/fr
 
 # Build the Single HTML Page Version
 asciidoc -b xhtml11 -a icons -a toc -a numbered -o asciidoc -o target/thucydides.html thucydides.doc    
-asciidoc -b xhtml11 -a icons -a toc -a numbered -o asciidoc -o target/thucydides-fr.html thucydides-fr.doc    
+#asciidoc -b xhtml11 -a icons -a toc -a numbered -o asciidoc -o target/thucydides-fr.html thucydides-fr.doc    
         
 # Build the Multipage HTML Version
-a2x -v -k -L -fchunked --xsl-file=docbook-xsl/chunked.xsl  --asciidoc-opts "-a icons -a toc -a numbered -a pygments"  --xsltproc-opts "--stringparam chunk.section.depth 1" -dbook -D target/en thucydides.doc   
+a2x -v -k -L -fchunked --xsl-file=docbook-xsl/custom-chunked.xsl  --asciidoc-opts "-a icons -a toc -a numbered"  --xsltproc-opts "--stringparam chunk.section.depth 1" -dbook -D target/en thucydides.doc   
 
-a2x -v -k -L -fchunked --xsl-file=docbook-xsl/chunked.xsl  --asciidoc-opts "-a icons -a toc -a numbered -a pygments"  --xsltproc-opts "--stringparam chunk.section.depth 1" -dbook -D target/fr thucydides-fr.doc   
+#a2x -v -k -L -fchunked --xsl-file=docbook-xsl/chunked.xsl  --asciidoc-opts "-a icons -a toc -a numbered"  --xsltproc-opts "--stringparam chunk.section.depth 1" -dbook -D target/fr thucydides-fr.doc   
 
 sleep 30
