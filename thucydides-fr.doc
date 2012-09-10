@@ -2234,7 +2234,7 @@ Typiquement, vous exécuterez Thucydides comme une partie du processus de build 
 
 	* *thucydides.issue.tracker.url*: L'URL utilisée pour générer les liens vers le système de suivi des bugs.
 	
-	* *thucydides.activate.firebugs* : Active les plugins Firebugs et FireFinder pour Firefox quand des tests WebDriver sont exécutés. Ceci est utile pour déboguer mais pas recommandé quand les tests sont exécutés sur un serveur de build.
+	* *thucydides.activate.firebugs* : Active les plugins Firebug et FireFinder pour Firefox quand des tests WebDriver sont exécutés. Ceci est utile pour déboguer mais pas recommandé quand les tests sont exécutés sur un serveur de build.
 
     * *thucydides.batch.count*: Si le test de batch est utilisé, ceci est le nombre des batches exécutés.
 
@@ -2519,7 +2519,7 @@ L'unique méthode de cette interface, `getTagsFor()`, prend un objet `TestOutcom
   }
 ------------------ 
 
-Vous devez également fournir une définition de service dans le répertoire `/META-INF/services` dans le classpath, de telle sorte que Thucydides puisse enregistrer et utiliser votre plugin. Un moyen simple de faire ceci est de créer un projet Maven avec un fichier appelé `net.thucydides.core.statistics.service.TagProvider` dans le répertoire `src/resources/META-INF/sevices`. Ce fichier est un fichier texte contenant le nom pleinement qualifié de votre fournisseur d'étiquette, par exemple:
+Vous devez également fournir une définition de service dans le répertoire `/META-INF/services` dans le classpath, de telle sorte que Thucydides puisse enregistrer et utiliser votre plugin. Un moyen simple de faire ceci est de créer un projet Maven avec un fichier appelé `net.thucydides.core.statistics.service.TagProvider` dans le répertoire `src/resources/META-INF/services`. Ce fichier est un fichier texte contenant le nom pleinement qualifié de votre fournisseur d'étiquette, par exemple:
 
 ------------------ 
   com.mycompany.thucydides.MyThucydidesTagProvider
