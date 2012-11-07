@@ -811,6 +811,15 @@ For this to work with JUnit, however, you need to pass the webdriver.driver prop
         </plugin> 
 -------------------
 
+==== Chrome switches
+
+Thucydides supports +chrome.switches+ system property to define options for the Chrome driver. This lets you set useful chrome options such as +"--homepage=about:blank" or "--no-first-run"+. You can provide any number of options, separated by commas, e.g.:
+
+-------------------
+$mvn verify -Dchrome.switches="homepage=about:blank,--no-first-run"
+-------------------
+
+
 === Forcing the use of a particular driver in a test case or test
 
 The +@Managed+ annotation also lets you specify what driver you want to use for a particular test case, via the +driver+ attribute. Current supported values are “firefox”, “iexplorer”, “chrome” and “htmlunit”. The +driver+ attribute lets you override the system-level default driver for specific requirements. For example, the following test case will run in Chrome, regardless of the +webdriver.driver+ system property value used:
@@ -2325,10 +2334,11 @@ You typically run Thucydides as part of the build process (either locally or on 
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
 
-    * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
+  * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
 
-     * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
+  * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
 
+  * *thcydides.reports.show.step.details* : Displays detailed step results in the test result tables. This property is set to false by default.
 	* *thucydides.restart.browser.frequency* : Restart the browser every so often during data-driven tests. 
                                  
 An example of using these parameters is shown here:
