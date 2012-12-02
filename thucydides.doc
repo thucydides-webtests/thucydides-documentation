@@ -2139,6 +2139,16 @@ This saves a lot of typing - our +getSearchResults()+ method now looks like this
 
 And since the Thucydides matchers work with both Java objects and Maps, the matcher expressions will be very similar. The only difference is that the Maps returned are indexed by the text values contained in the table headings, rather than by java-friendly property names.
 
+You can also read tables without headers (i.e., <th> elements) by specifying your own headings using the +withColumns+ method. For example:
+
+
+---------
+    List<Map<Object, String>> tableRows =
+                    HtmlTable.withColumns("First Name","Last Name", "Favorite Colour")
+                             .readRowsFrom(page.table_with_no_headings);
+---------
+
+
 You can also use the HtmlTable class to select particular rows within a table to work with. For example, another test scenario for the Maven Search page involves clicking on an artifact and displaying the details for that artifact. The test for this might look something like this:
 
 
@@ -3256,7 +3266,9 @@ Thucydides lets you perform data-driven testing using test data in a CSV file. Y
 
 Next, create a test class containing properties that match the columns in the test data. Each property should be a property by the JavaBeans definition, with a matching getter and setter. The test class will typically contain one or more tests that use these properties as parameters to the test step or Page Object methods.
 
-The class will also contain the *@UseTestDataFrom* annotation to indicate where to find the CSV file (this can either be a file on the classpath or a relative or absolute file path - putting the data set on the class path (e.g. in +src/test/resources+) makes the tests more portable). You also use the *@RunWith* annotation as well as the other usual Thucydides annotations (+@Managed+, +@ManagedPages+ and +@Steps+). 
+The class will also contain the *@UseTestDataFrom* annotation to indicate where to find the CSV file (this can either be a file on the classpath or a relative or absolute file path - putting the data set on the class path (e.g. in +src/test/resources+) makes the tests more portable). 
+
+You also use the *@RunWith* annotation as well as the other usual Thucydides annotations (+@Managed+, +@ManagedPages+ and +@Steps+). 
 
 An example of such a class is shown here:
 
@@ -3316,6 +3328,23 @@ An example of such a class is shown here:
 	        this.placeOfBirth = placeOfBirth;
 	    }
 	}
+---------
+
+You can also specify multiple file paths separated by path separators – colon, semi-colon or comma. For example:
+
+---------
+ 
+	@UseTestDataFrom("test-data/simple-data.csv,test-data-subfolder/simple-data.csv")
+
+---------
+
+
+You can also configure an arbitrary directory using system property +thucydides.data.dir+ and then refer to it as +$DATADIR+ variable in the annotation.
+
+---------
+ 
+	@UseTestDataFrom("$DATADIR/simple-data.csv")
+
 ---------
 
 Each row of test data needs to be distinguished in the generated reports. By default, Thucydides will call the +toString()+ method. If you provide a public method returning a String that is annotated by the +@Qualifier+ annotation, then this method will be used to distinguish data sets. It should return a value that is unique to each data set.
