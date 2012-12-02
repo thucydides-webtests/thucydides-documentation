@@ -3533,6 +3533,8 @@ You also can use as many data files as you want, even in the same test. You can 
 	}
 -------------------
 
+By the way we need to use +ThucydidesRunner+ for the test cases instead of +ThucydidesParameterizedRunner+.
+
 Note that, as a shortcut, you can dispense with the setter methods and just declare the relevant fields public. So the Steps class shown above could be rewritten like this:
 
 
