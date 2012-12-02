@@ -3625,6 +3625,137 @@ mvn verify -Deasyb.batch.count=3 -Deasyb.batch.number=1
 
 If you have both easyb and JUnit Thucydides tests, you will need to specify both options.
 
+
+== Experimental features
+=== Integration with FluentLineum
+You can use https://github.com/FluentLenium/FluentLenium[FluentLenium‘s] fluent API with Thucydides. The best way to use FluentLenium within Thucydides is to use ThucydidesFluentAdapter which is available in PageObject. Here’s an example of the same PageObject written in the traditional style and with FluentLenium.
+
+------------------
+import ch.lambdaj.function.convert.Converter;
+import net.thucydides.core.annotations.DefaultUrl;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import net.thucydides.core.pages.PageObject;
+
+import java.util.List;
+
+import static ch.lambdaj.Lambda.convert;
+
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class DictionaryPage extends PageObject {
+
+    @FindBy(name="search")
+    private WebElement searchTerms;
+
+    @FindBy(name="go")
+    private WebElement lookupButton;
+
+    public DictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        element(searchTerms).type(keyword);
+    }
+
+    public void lookup_terms() {
+        element(lookupButton).click();
+    }
+
+    public List getDefinitions() {
+        WebElement definitionList = getDriver().findElement(By.tagName("ol"));
+        List results = definitionList.findElements(By.tagName("li"));
+        return convert(results, toStrings());
+    }
+
+    private Converter<WebElement, String> toStrings() {
+        return new Converter<WebElement, String>() {
+            public String convert(WebElement from) {
+                return from.getText();
+            }
+        };
+    }
+}
+------------------
+
+and with FluentLineum
+
+------------------
+import ch.lambdaj.function.convert.Converter;
+import net.thucydides.core.annotations.DefaultUrl;
+import net.thucydides.core.pages.PageObject;
+import org.fluentlenium.core.domain.FluentList;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import java.util.List;
+
+import static ch.lambdaj.Lambda.convert;
+import static org.fluentlenium.core.filter.FilterConstructor.withName;
+
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class FluentDictionaryPage extends PageObject {
+
+    public FluentDictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        fluent().fill("input", withName("search")).with(keyword);
+    }
+
+    public void lookup_terms() {
+        fluent().click("input", withName("go"));
+    }
+
+    public List getDefinitions() {
+        FluentList results = fluent().findFirst("ol").find("li");
+        return results.getTexts();
+    }
+}
+------------------
+
+=== Shortcut for the element() method
+Another new experimental feature introduces the ability to replace the commonly-used element() method with ‘$’, as illustrated in the following examples:
+
+------------------
+    ...
+    @FindBy(name="search")
+    private WebElement searchTerms;
+
+    @FindBy(name="go")
+    private WebElement lookupButton;
+
+    public DictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        $(searchTerms).type(keyword);
+    }
+
+    public void lookup_terms() {
+        $(lookupButton).click();
+    }
+
+    public void click_on_article(int articleNumber) {
+        $("//section[@id='searchResults']/article[" + articleNumber + "]//a").click();
+    }
+
+    public String getHeading() {
+        return $("section>h1").getText()
+    }
+}
+
+------------------
+
+
 [[further-reading]]
    
 == Further Reading
