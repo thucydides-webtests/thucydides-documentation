@@ -811,6 +811,15 @@ For this to work with JUnit, however, you need to pass the webdriver.driver prop
         </plugin> 
 -------------------
 
+==== Chrome switches
+
+Thucydides supports +chrome.switches+ system property to define options for the Chrome driver. This lets you set useful chrome options such as +"--homepage=about:blank" or "--no-first-run"+. You can provide any number of options, separated by commas, e.g.:
+
+-------------------
+$mvn verify -Dchrome.switches="homepage=about:blank,--no-first-run"
+-------------------
+
+
 === Forcing the use of a particular driver in a test case or test
 
 The +@Managed+ annotation also lets you specify what driver you want to use for a particular test case, via the +driver+ attribute. Current supported values are “firefox”, “iexplorer”, “chrome” and “htmlunit”. The +driver+ attribute lets you override the system-level default driver for specific requirements. For example, the following test case will run in Chrome, regardless of the +webdriver.driver+ system property value used:
@@ -2307,7 +2316,15 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *thucydides.outputDirectory*: Where should reports be generated.
 
-	* *thucydides.only.save.failing.screenshots* : Should Thucydides only store screenshots for failing steps? This can save disk space and speed up the tests a little. It is very useful for data-driven testing.
+	* *thucydides.only.save.failing.screenshots* : Should Thucydides only store screenshots for failing steps? This can save disk space and speed up the tests a little. It is very useful for data-driven testing. This property is now deprecated. Use +thucydides.take.screenshots+ instead.
+
+  * *thucydides.verbose.screenshots* : Set this to +true+ for saving screenshots at every web element action (like click(), typeAndEnter(), type(), typeAndTab() etc.). This property is now deprecated. Use +thucydides.take.screenshots+ instead.
+
+  * *thucydides.take.screenshots* : Set this property to have more finer control on how screenshots are taken. This property can take the folowing values:
+    ** *FOR_EACH_ACTION* : Similar to +thucydides.verbose.screenshots+
+    ** *BEFORE_AND_AFTER_EACH_STEP*,
+    ** *AFTER_EACH_STEP*, and
+    ** *FOR_FAILURES* : Similar to +thucydides.only.save.failing.screenshots+
 
 	* *thucydides.restart.browser.frequency*: During data-driven tests, some browsers (Firefox in particular) may slow down over time due to memory leaks. To get around this, you can get Thucydides to start a new browser session at regular intervals when it executes data-driven tests.
 
@@ -2325,10 +2342,11 @@ You typically run Thucydides as part of the build process (either locally or on 
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
 
-    * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
+  * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
 
-     * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
+  * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
 
+  * *thcydides.reports.show.step.details* : Displays detailed step results in the test result tables. This property is set to false by default.
 	* *thucydides.restart.browser.frequency* : Restart the browser every so often during data-driven tests. 
                                  
 An example of using these parameters is shown here:
@@ -2946,6 +2964,38 @@ As with JUnit, you will need to pass in the proper parameters to easyb for this 
 
 Once this is done, Thucydides will update the relevant JIRA issues automatically whenever the tests are executed.
  
+== Managing screenshots
+By default, Thucydides saves a screenshot for every step executed during the tests. Thucydides can be configured to control when screenshots are stored.
+
+=== Configuring when screenshots are taken
+The property +thucydides.take.screenshots+ can be set to configure how often the sreenshots are taken. This property can take the folowing values:
+
+* +FOR_EACH_ACTION+ : Saves a screenshot at every web element action (like click(), typeAndEnter(), type(), typeAndTab() etc.). 
+
+* +BEFORE_AND_AFTER_EACH_STEP+ : Saves a screeshot before and asfter every step.
+
+* +AFTER_EACH_STEP+ : Saves a screenshot after every step
+
+* +FOR_FAILURES+ : Saves screenshots only for failing steps. This can save disk space and speed up the tests a little. It is very useful for data-driven testing. 
+
+=== Using annotations to control screenshots
+An even more granular level of control is possible using annotations. You can annotate any test or step method (or any method used by a step or test) with the +@Screenshots+ annotation to override the number of screenshots taken within this step (or sub-step). Some sample uses are shown here:
+
+------------------
+@Step
+@Screenshots(onlyOnFailures=true)
+public void screenshots_will_only_be_taken_for_failures_from_here_on() {…}
+
+@Test
+@Screenshots(forEachStep=true)
+public void should_take_screenshots_for_each_step_in_this_test() {…}
+
+@Test
+@Screenshots(forEachAction=true)
+public void should_take_screenshots_for_each_action_in_this_test() {…}
+------------------
+
+
 === Increasing the size of screenshots
 Sometimes the default window size is too small to display all of the application screen in the screenshots. You can increase the size of the window Thucydides opens by providing the +thucydides.browser.width+ and +thucydides.browser.height+ system properties. For example, to use a browser window with dimensions of 1200x1024, you could do the following:
 
