@@ -3190,6 +3190,34 @@ Selenium needs memory to take screenshots, particularly if the screens are large
     </configuration>
 </plugin>
 ------------------   
+
+=== Blurring sensitive screenshots
+For security/privacy reasons, it may be required to blur sensitive screenshots in Thucydides reports. This can be done by annotating the test methods or steps with the annotation +@BlurScreenshots+. When defined on a test, all screenshots for that test will be blurred. When defined on a step, only the screenshot for that step will be blurred. @BlurredScreenshot takes a string parameter with values +LIGHT, MEDIUM+ or +HEAVY+ to indicate the amount of blurring. For example,
+
+------------------
+@Test
+@BlurScreenshots("HEAVY")
+public void looking_up_the_definition_of_pineapple_should_display_the_corresponding_article() {
+    endUser.is_the_home_page();
+    endUser.looks_for("pineapple");
+    endUser.should_see_definition_containing_words("A thorny fruit");
+}
+------------------
+
+A screen at various blur levels is shown below.
+
+[[fig-screen_blur_light]]
+.A lightly blurred screenshot
+image::figs/blur/light.png[scaledwidth="80%", width=475]
+
+[[fig-screen_blur_medium]]
+.A medium blurred screenshot
+image::figs/blur/medium.png[scaledwidth="80%", width=475]
+
+[[fig-screen_blur_heavy]]
+.A heavily blurred screenshot
+image::figs/blur/heavy.png[scaledwidth="80%", width=475]
+
                
 == Managing state between steps                  
 
