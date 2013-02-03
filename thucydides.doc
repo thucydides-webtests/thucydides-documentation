@@ -2480,6 +2480,8 @@ You typically run Thucydides as part of the build process (either locally or on 
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
 
+  * *thucydides.batch.strategy* : Defines batch strategy. Allowed values - DIVIDE_EQUALLY (default) and DIVIDE_BY_TEST_COUNT. DIVIDE_EQUALLY will simply divide the tests equally across all batches. This could be inefficient if the number of tests vary a lot between test classes. A DIVIDE_BY_TEST_COUNT strategy could be more useful in such cases as this will create batches based on number of tests.
+
   * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
 
   * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
@@ -3711,6 +3713,12 @@ mvn verify -Deasyb.batch.count=3 -Deasyb.batch.number=1
 
 If you have both easyb and JUnit Thucydides tests, you will need to specify both options.
 
+=== Test count based batch strategy
+By default, test cases are divided equally among batches. This could be inefficient if some test cases have more tests than others. In such situations, a different batch strategy, +DIVIDE_BY_TEST_COUNT+ can be defined using the system property +thucydides.batch.strategy+. This strategy will evenly distribute test cases across batches based on number of test methods in each test case.
+
+------------------
+mvn verify -Dthucydides,batch.strategy=DIVIDE_BY_TEST_COUNT -Dthucydides.batch.count=3 -Dthucydides.batch.number=1
+------------------
 
 == Experimental features
 === Integration with FluentLineum
