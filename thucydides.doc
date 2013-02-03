@@ -2446,7 +2446,7 @@ image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=475]
 
 You typically run Thucydides as part of the build process (either locally or on a CI server). In addition to the +webdriver.driver+ option discussed about, you can also pass a number of parameters in as system properties to customize the way the tests are run. The full list is shown here:
 
-	* *webdriver.driver*: What browser do you want your tests to run in: firefox, chrome or iexplorer.
+	* *webdriver.driver*: What browser do you want your tests to run in: firefox, chrome or iexplorer. Basic support for iPhone and Android drivers is also available.
 
 	* *webdriver.base.url*: The default starting URL for the application, and base URL for relative paths.
 
@@ -2464,7 +2464,10 @@ You typically run Thucydides as part of the build process (either locally or on 
     ** *AFTER_EACH_STEP*, and
     ** *FOR_FAILURES* : Similar to +thucydides.only.save.failing.screenshots+
 
-	* *thucydides.restart.browser.frequency*: During data-driven tests, some browsers (Firefox in particular) may slow down over time due to memory leaks. To get around this, you can get Thucydides to start a new browser session at regular intervals when it executes data-driven tests.
+	
+  * *thucydides.verbose.steps* : Set this property to provide more detailed logging of WebElementFacade steps when tests are run.
+
+  * *thucydides.restart.browser.frequency*: During data-driven tests, some browsers (Firefox in particular) may slow down over time due to memory leaks. To get around this, you can get Thucydides to start a new browser session at regular intervals when it executes data-driven tests.
 
 	* *thucycides.step.delay*: Pause (in ms) between each test step.
 
@@ -2479,6 +2482,8 @@ You typically run Thucydides as part of the build process (either locally or on 
 	* *thucydides.issue.tracker.url*: The URL used to generate links to the issue tracking system.
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
+
+  * *thucydides.batch.strategy* : Defines batch strategy. Allowed values - DIVIDE_EQUALLY (default) and DIVIDE_BY_TEST_COUNT. DIVIDE_EQUALLY will simply divide the tests equally across all batches. This could be inefficient if the number of tests vary a lot between test classes. A DIVIDE_BY_TEST_COUNT strategy could be more useful in such cases as this will create batches based on number of tests.
 
   * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
 
@@ -2516,7 +2521,17 @@ On Windows, it would be something like:
 C:\Projects\myproject>mvn test -Dwebdriver.firefox.profile=C:\Users\John Smart\AppData\Roaming\Mozilla\Firefox\Profiles\mvxjy48u.default
 ------------------
 
-	* *thucydides.history*: The directory in which build history summary data is stored for each project. Each project has it's own sub-folder within this directory. Defaults to ~./thucydides.
+  * *firefox.preferences*: A semicolon separated list of Firefox configuration settings. For ex.,
+
+------------------
+-Dfirefox.preferences="browser.download.folderList=2;browser.download.manager.showWhenStarting=false;browser.download.dir=c:\downloads"
+------------------
+
+Integer and boolean values will be converted to the corresponding types in the Firefox preferences; all other values will be treated as Strings. You can set a boolean value to true by simply specifying the property name, e.g. +-Dfirefox.preferences=app.update.silent+.
+
+A complete reference to Firefox's configuration settings is given http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries[here].
+	
+  * *thucydides.history*: The directory in which build history summary data is stored for each project. Each project has it's own sub-folder within this directory. Defaults to ~./thucydides.
  
 If you want to set default values for some of these properties for your own development environment (e.g. to always activate the Firebugs plugin on your development machine), create a file called +thucydides.properties+ in your home directory, and set any default values here. These values will still be overridden by any values defined in the environment variables. An example is shown here:
 
@@ -3711,6 +3726,12 @@ mvn verify -Deasyb.batch.count=3 -Deasyb.batch.number=1
 
 If you have both easyb and JUnit Thucydides tests, you will need to specify both options.
 
+=== Test count based batch strategy
+By default, test cases are divided equally among batches. This could be inefficient if some test cases have more tests than others. In such situations, a different batch strategy, +DIVIDE_BY_TEST_COUNT+ can be defined using the system property +thucydides.batch.strategy+. This strategy will evenly distribute test cases across batches based on number of test methods in each test case.
+
+------------------
+mvn verify -Dthucydides,batch.strategy=DIVIDE_BY_TEST_COUNT -Dthucydides.batch.count=3 -Dthucydides.batch.number=1
+------------------
 
 == Experimental features
 === Integration with FluentLineum
