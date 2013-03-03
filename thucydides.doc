@@ -1515,7 +1515,7 @@ When you need to use a page object in one of your steps, you just ask for one fr
 FindAJobPage page = getPages().get(FindAJobPage.class);
 ---------------------
 
-If you want to make sure you are one the right page, you can use the +currentPageAt()+ method. This will check the page class for any +@At+ annotations present in the Page Object class and, if present, check that the current URL corresponds to the URL pattern specified in the annotation. For example, when you invoke it using +currentPageAt()+, the following Page Object will check that the current URL is precisely http://www.apache.org.
+If you want to make sure you are on the right page, you can use the +currentPageAt()+ method. This will check the page class for any +@At+ annotations present in the Page Object class and, if present, check that the current URL corresponds to the URL pattern specified in the annotation. For example, when you invoke it using +currentPageAt()+, the following Page Object will check that the current URL is precisely http://www.apache.org.
 
 
 ---------------------
@@ -2479,6 +2479,10 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *thucydides.resized.image.width* : Value in pixels. If set, screenshots are resized to this size. Useful to save space.
 
+  * *thucydides.keep.unscaled.screenshots* : Set to +true+ if you wish to save the original unscaled screenshots. This is set to +false+ by default.
+
+  * *thucydides.store.html.source* : Set this property to +true+ to save the HTML source code of the screenshot web pages. This is set to +false+ by default. 
+
 	* *thucydides.issue.tracker.url*: The URL used to generate links to the issue tracking system.
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
@@ -3158,6 +3162,12 @@ public void should_take_screenshots_for_each_action_in_this_test() {…}
 ------------------
 
 
+=== Taking screenshots at any arbitrary point during a step
+It is possible to have even finer control on capturing screenshots in the tests. Using the +takeScreenshot+ method, you can  instruct Thucydides to take a screenshot at any arbitrary point in the step irrespective of the screenshot level set using configuration or annotations.
+
+Simply call +Thucydides.takeScreenshot()+ in the step methods whenever you want a screenshot to be captured.
+
+
 === Increasing the size of screenshots
 Sometimes the default window size is too small to display all of the application screen in the screenshots. You can increase the size of the window Thucydides opens by providing the +thucydides.browser.width+ and +thucydides.browser.height+ system properties. For example, to use a browser window with dimensions of 1200x1024, you could do the following:
 
@@ -3205,6 +3215,12 @@ Selenium needs memory to take screenshots, particularly if the screens are large
     </configuration>
 </plugin>
 ------------------   
+
+=== Saving raw screenshots
+Thucydides saves only rescaled screenshots by default. This is done to help reduce the disk space taken by reports. If you require to save the original unscaled screenshots, this default can be easily overridden by setting the property, +thucydides.keep.unscaled.screenshots+ to +true+.
+
+=== Saving HTML source files for screenshots
+It is possible to save html source files for the screenshots by setting the property, +thucydides.store.html.source+ to +true+. Html source files are not saved by default to conserve disk space.
 
 === Blurring sensitive screenshots
 For security/privacy reasons, it may be required to blur sensitive screenshots in Thucydides reports. This can be done by annotating the test methods or steps with the annotation +@BlurScreenshots+. When defined on a test, all screenshots for that test will be blurred. When defined on a step, only the screenshot for that step will be blurred. @BlurredScreenshot takes a string parameter with values +LIGHT, MEDIUM+ or +HEAVY+ to indicate the amount of blurring. For example,
@@ -3861,6 +3877,38 @@ Another new experimental feature introduces the ability to replace the commonly-
 }
 
 ------------------
+
+=== Using Step methods to document test cases
+Methods in the Step library can be used to provide additional documentation for the test scenarios in Thucydides reports. You can pass valid HTML text as parameter to @Step methods in the step library. This will show up as formatted text in the reports on the step details page. The following screenshot demonstrates this.
+
+[[fig-html-argument-shows-up-in-test-report]]
+.HTML formatted text, if passed to a step method will be displayed as shown. This can be useful for annotating or documenting the tests with helpful information.
+image::figs/html-argument-shows-up-in-test-report.jpg[scaledwidth="80%", width=475]
+
+This is achieved by creating a dummy @Step method called description that takes a String parameter. At runtime, the tests supply this method with formatted html text as parameter.
+
+------------------
+...
+@Step
+public void description(String html) {
+    //do nothing
+}
+
+public void about(String description, String...remarks) {
+    String html =
+    "<h2 style=\"font-style:italic;color:black\">" + description + "</h2>" +
+    "<div><p>Remarks:</p>" +
+    "<ul style=\"margin-left:5%; font-weight:200; color:#434343; font-size:10px;\">";
+
+    for (String li : remarks) html += "<li>" + li + "</li>";
+
+    html += "<ul></div>";
+
+    description(html);
+}
+...
+------------------
+
 
 
 [[further-reading]]
