@@ -1191,7 +1191,7 @@ Examples:
 |firstname|lastname|
 |Joe      | Blow|
 |John     | Doe   |
------------------
+----------------------
 
 You can also use the @issue annotation to link scenarios with issues, as illustrated here:
 
