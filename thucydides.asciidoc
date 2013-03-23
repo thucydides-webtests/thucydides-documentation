@@ -942,7 +942,7 @@ public class SearchByFoodKeywordStoryTest {
         endUser.should_see_article_with_title_containing("Pineapple");
     }
 }         
-----------------------
+-----------------
 
 In *easyb*, you can use the +uses_driver+ directive, as shown here:
 
@@ -1191,7 +1191,7 @@ Examples:
 |firstname|lastname|
 |Joe      | Blow|
 |John     | Doe   |
------------------
+----------------------
 
 You can also use the @issue annotation to link scenarios with issues, as illustrated here:
 
@@ -1234,7 +1234,7 @@ Thucydides makes no distinction between the JBehave-style @Given, @When and @The
 
 A typical example is shown below. In this implementation of one of the scenarios we saw above, the high-level steps are defined using methods annotated with the JBehave @Given, @When and @Then annotations. These methods, in turn, use steps that are implemented in the BuyerSteps class, which contains a set of Thucydides @Step methods. The advantage of using this two-leveled approach is that it helps maintain a degree of separation between the definition of what is being done in a test, and how it is being implemented. This tends to make the tests easier to understand and easier to maintain.
 
-----------------------
+--------------------------
 public class SearchScenarioSteps {
     @Steps
     BuyerSteps buyer;
@@ -1258,7 +1258,7 @@ public class SearchScenarioSteps {
         buyer.should_only_see_results_in_category(category);
     }
 }
----------------
+--------------------------
 
 The Thucydides steps can be found in the BuyserSteps class. This class in turn uses Page Objects to interact with the actual web application, as illustrated here:
 
@@ -1791,7 +1791,7 @@ In WebDriver terms, there is a distinction between when an element is present on
 
 ----------------------
 assertThat(indexPage.isElementVisible(By.xpath("//h2[.='A visible title']")), is(true));
------------------------
+----------------------
 
 or 
 
@@ -1863,7 +1863,7 @@ indexPage.waitForTextToDisappear("A visible bit of text");
 If several possible texts may appear, you can use +waitForAnyTextToAppear+ or +waitForAllTextToAppear+:
 
 
-----------------------
+---------------------
 indexPage.waitForAnyTextToAppear("this might appear","or this", "or even this");
 ---------------------
 
@@ -2266,7 +2266,7 @@ public class WhenDisplayingTableContents {
         steps.onSamePage(DemoSiteSteps.class).check_row(3);
     }
 }
----------------------
+------------------
 
 == Spring Integration
 
@@ -3299,7 +3299,7 @@ In JUnit 4, you can use the Parameterized test runner to perform data-driven tes
 An example of a data-driven Thucydides test is shown below. In this test, we are checking that valid ages and favorite colors are accepted by the sign-on page of an (imaginary) application. To test this, we use several combinations of ages and favorite colors, specified by the testData() method. These values are represented as instance variables in the test class, and instantiated via the constructor.
 
 
-------------------   
+-----------------
 @RunWith(ThucydidesParameterizedRunner.class)
 public class WhenEnteringPersonalDetails {
 
@@ -3335,7 +3335,7 @@ public class WhenEnteringPersonalDetails {
         signup.enterPersonalDetails(age, favoriteColor);
     }  
 }
---------------
+------------------
 
 === Reporting on data-driven web tests
 
@@ -3483,12 +3483,12 @@ If some of the field values contain commas, you will need to use a different sep
     Joe Smith; 30; 10 Main Street, Smithville
     Jack Black; 40; 1 Main Street, Smithville
     Mary Williams, 20, 2 Main Street, Williamsville
-------------
+-----------
 
 To run our tests against this data, we would use a test class like the following:
 
 
-------------------   
+------------
 	@RunWith(ThucydidesParameterizedRunner.class)
 	@UseTestDataFrom(value="test-data/simple-semicolon-data.csv", separator=';')
 	public class SampleCSVDataDrivenScenario {
@@ -3562,7 +3562,7 @@ Sometimes you want to use data-driven testing at the step level, rather than at 
 You can do this by adding property values to your Step files. Consider the following steps file:
 
 
-------------------   
+------------------
 	public class SampleDataDrivenSteps extends ScenarioSteps {
 
 	    public SampleDataDrivenSteps(Pages pages) {
@@ -3606,14 +3606,14 @@ You can do this by adding property values to your Step files. Consider the follo
 			...
 		}
 	}
---------------
+------------------
 
 The +enter_personal_details+ step group uses the step fields to run the +enter_name_and_age+ and +enter_address steps+. We want to fetch this data from a CSV file, and loop through the *enter_personal_details* step for each row of data.
 
 We do this using the +withTestDataFrom()+ method of the *StepData* class:
 
 
-------------------   
+------------------
 	import net.thucydides.core.annotations.ManagedPages;
 	import net.thucydides.core.annotations.Steps;
 	import net.thucydides.core.pages.Pages;
@@ -3644,14 +3644,14 @@ We do this using the +withTestDataFrom()+ method of the *StepData* class:
 	        withTestDataFrom("test-data/simple-data.csv").run(steps).enter_new_user_details();
 	    }
 	}
---------------
+------------------
 	
 This will call the +data_driven_test_step()+ multiple times, each time injecting data from the +test-data/simple-data.csv+ file into the step.
 
 You also can use as many data files as you want, even in the same test. You can also use the same data file for more than one test step. Remember only the properties that match columns in the CSV file will be instantiated - the others will be ignored:
 
 
-------------------   
+------------------
 	@RunWith(ThucydidesRunner.class)
 	public class SamplePassingScenarioWithTestSpecificData {
 
@@ -3677,14 +3677,14 @@ You also can use as many data files as you want, even in the same test. You can 
 	        withTestDataFrom("test-data/some_other-data.csv").run(different_steps).enter_other_details();
 	    }
 	}
--------------------
+------------------
 
 By the way we need to use +ThucydidesRunner+ for the test cases instead of +ThucydidesParameterizedRunner+.
 
 Note that, as a shortcut, you can dispense with the setter methods and just declare the relevant fields public. So the Steps class shown above could be rewritten like this:
 
 
-------------------   
+------------------
 	public class SampleDataDrivenSteps extends ScenarioSteps {
 
 	    public SampleDataDrivenSteps(Pages pages) {
@@ -3716,7 +3716,7 @@ Note that, as a shortcut, you can dispense with the setter methods and just decl
 			...
 		}
 	}
--------------------
+------------------
    
 == Running Thucydides tests in parallel batches
 

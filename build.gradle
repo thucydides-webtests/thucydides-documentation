@@ -1,4 +1,4 @@
-def srcFile = file('thucydides.doc')
+def srcFile = file('thucydides.asciidoc')
 def srcImages = file("$projectDir/images")
 def srcFigures = file("$projectDir/figs")
 def destFile = file("$buildDir/index.html")  
