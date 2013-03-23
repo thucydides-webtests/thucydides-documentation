@@ -3677,7 +3677,7 @@ You also can use as many data files as you want, even in the same test. You can 
 	        withTestDataFrom("test-data/some_other-data.csv").run(different_steps).enter_other_details();
 	    }
 	}
--------------------
+------------------
 
 By the way we need to use +ThucydidesRunner+ for the test cases instead of +ThucydidesParameterizedRunner+.
 
