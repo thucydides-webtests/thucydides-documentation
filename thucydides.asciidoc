@@ -1234,7 +1234,7 @@ Thucydides makes no distinction between the JBehave-style @Given, @When and @The
 
 A typical example is shown below. In this implementation of one of the scenarios we saw above, the high-level steps are defined using methods annotated with the JBehave @Given, @When and @Then annotations. These methods, in turn, use steps that are implemented in the BuyerSteps class, which contains a set of Thucydides @Step methods. The advantage of using this two-leveled approach is that it helps maintain a degree of separation between the definition of what is being done in a test, and how it is being implemented. This tends to make the tests easier to understand and easier to maintain.
 
-----------------------
+--------------------------
 public class SearchScenarioSteps {
     @Steps
     BuyerSteps buyer;
@@ -1258,7 +1258,7 @@ public class SearchScenarioSteps {
         buyer.should_only_see_results_in_category(category);
     }
 }
----------------
+--------------------------
 
 The Thucydides steps can be found in the BuyserSteps class. This class in turn uses Page Objects to interact with the actual web application, as illustrated here:
 
