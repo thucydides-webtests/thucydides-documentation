@@ -2266,7 +2266,7 @@ public class WhenDisplayingTableContents {
         steps.onSamePage(DemoSiteSteps.class).check_row(3);
     }
 }
----------------------
+------------------
 
 == Spring Integration
 
