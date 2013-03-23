@@ -942,7 +942,7 @@ public class SearchByFoodKeywordStoryTest {
         endUser.should_see_article_with_title_containing("Pineapple");
     }
 }         
-----------------------
+-----------------
 
 In *easyb*, you can use the +uses_driver+ directive, as shown here:
 
