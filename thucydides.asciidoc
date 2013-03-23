@@ -1863,7 +1863,7 @@ indexPage.waitForTextToDisappear("A visible bit of text");
 If several possible texts may appear, you can use +waitForAnyTextToAppear+ or +waitForAllTextToAppear+:
 
 
-----------------------
+---------------------
 indexPage.waitForAnyTextToAppear("this might appear","or this", "or even this");
 ---------------------
 
