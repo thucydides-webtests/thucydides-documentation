@@ -1791,7 +1791,7 @@ In WebDriver terms, there is a distinction between when an element is present on
 
 ----------------------
 assertThat(indexPage.isElementVisible(By.xpath("//h2[.='A visible title']")), is(true));
------------------------
+----------------------
 
 or 
 
