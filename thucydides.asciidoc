@@ -3483,7 +3483,7 @@ If some of the field values contain commas, you will need to use a different sep
     Joe Smith; 30; 10 Main Street, Smithville
     Jack Black; 40; 1 Main Street, Smithville
     Mary Williams, 20, 2 Main Street, Williamsville
-------------
+-----------
 
 To run our tests against this data, we would use a test class like the following:
 
