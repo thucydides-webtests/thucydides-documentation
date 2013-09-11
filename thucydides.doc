@@ -2308,6 +2308,31 @@ public class WhenDisplayingTableContents {
 }
 ---------------------
 
+=== Switching to another page
+
+A method, switchToPage() is provided in PageObject class to make it convenient to return a new PageObject after navigation from within a method of a PageObject class. For example,
+
+------------------
+
+@DefaultUrl("http://mail.acme.com/login.html")
+public class EmailLoginPage extends PageObject {
+ 
+    ...
+    public void forgotPassword() {
+        ...
+        forgotPassword.click();
+        ForgotPasswordPage forgotPasswordPage = this.switchToPage(ForgotPasswordPage.class);
+        forgotPasswordPage.open();
+        ...
+    }
+    ...
+}
+
+
+------------------
+
+
+
 == Spring Integration
 
 If you are running your acceptance tests against an embedded web server (for example, using Jetty), it can occasionally be useful to access the service layers directly for fixture or infrastructure-related code. For example, you may have a scenario where a user action must, as a side effect, record an audit log in a table in the database. To keep your test focused and simple, you may want to call the service layer directly to check the audit logs, rather than logging on as an administrator and navigating to the audit logs screen.
