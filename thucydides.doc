@@ -1620,6 +1620,12 @@ You should never try to implement the +open()+ method yourself. In fact, it is f
 
 === Working with web elements  
 
+.Important
+************************************************
+The element() method described below is no longer
+needed. See <<webelementfacade, Web Element Facade section>> for details.
+************************************************
+
 ==== Checking whether elements are visible
 
 The element method of the PageObject class provides a convenient fluent API for dealing with web elements, providing some commonly-used extra features that are not provided out-of-the-box by the WebDriver API. For example, you can check that an element is visible as shown here:
@@ -1761,6 +1767,40 @@ or
 ---------------------
 element(field).waitUntilVisible()
 element(button).waitUntilNotVisible()
+---------------------
+
+
+[[webelementfacade]]
+==== Using WebElementFacade variables directly
+
+Instead of declaring WebElement variables in Page Objects and then calling element() or $() to wrap them in WebElementFacades, you can now declare WebElementFacade variables directly inside the Page Objects. This will make the Page Object code simpler more readable.
+
+So, instead of writing,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElement searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return element(searchButton).isVisible();
+    }
+    ...
+}      
+---------------------
+
+you can write,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElementFacade searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return searchButton.isVisible();
+    }
+    ...
+}      
 ---------------------
 
 ==== Using direct XPath and CSS selectors
@@ -2268,6 +2308,31 @@ public class WhenDisplayingTableContents {
 }
 ---------------------
 
+=== Switching to another page
+
+A method, switchToPage() is provided in PageObject class to make it convenient to return a new PageObject after navigation from within a method of a PageObject class. For example,
+
+------------------
+
+@DefaultUrl("http://mail.acme.com/login.html")
+public class EmailLoginPage extends PageObject {
+ 
+    ...
+    public void forgotPassword() {
+        ...
+        forgotPassword.click();
+        ForgotPasswordPage forgotPasswordPage = this.switchToPage(ForgotPasswordPage.class);
+        forgotPasswordPage.open();
+        ...
+    }
+    ...
+}
+
+
+------------------
+
+
+
 == Spring Integration
 
 If you are running your acceptance tests against an embedded web server (for example, using Jetty), it can occasionally be useful to access the service layers directly for fixture or infrastructure-related code. For example, you may have a scenario where a user action must, as a side effect, record an audit log in a table in the database. To keep your test focused and simple, you may want to call the service layer directly to check the audit logs, rather than logging on as an administrator and navigating to the audit logs screen.
@@ -2500,6 +2565,8 @@ You typically run Thucydides as part of the build process (either locally or on 
   * *thucydides.locator.factory* :   Set this property to override the default locator factory with another locator factory (for ex., AjaxElementLocatorFactory or DefaultElementLocatorFactory). By default, Thucydides uses a custom locator factory called DisplayedElementLocatorFactory.
 
   * *thucydides.driver.capabilities* : Use this property to pass a semi-colon separated list of capabilities to the web driver.
+
+  * *thucydides.native.events* : Activate and deactivate native events for Firefox by setting this property to +true+ or +false+.
 
   * *security.enable_java* : Set this to true to enable Java support in Firefox. By default, this is set to false as it slows down the web driver.
 
