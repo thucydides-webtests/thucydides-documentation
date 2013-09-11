@@ -29,7 +29,7 @@ and other countries.
 Eclipse™ is a trademark of the Eclipse Foundation, Inc., in the United
 States and other countries.
 
-Apache and the Apache feather logo are trademarks of The Apache
+Apache and the Apache feather logo are trademarks of The ApacheWorig
 Software Foundation.
   
 Many of the designations used by manufacturers and sellers to
@@ -1620,6 +1620,12 @@ You should never try to implement the +open()+ method yourself. In fact, it is f
 
 === Working with web elements  
 
+.Important
+************************************************
+The element() method described below is no longer
+needed. See <<webelementfacade, Web Element Facade section>> for details.
+************************************************
+
 ==== Checking whether elements are visible
 
 The element method of the PageObject class provides a convenient fluent API for dealing with web elements, providing some commonly-used extra features that are not provided out-of-the-box by the WebDriver API. For example, you can check that an element is visible as shown here:
@@ -1761,6 +1767,40 @@ or
 ---------------------
 element(field).waitUntilVisible()
 element(button).waitUntilNotVisible()
+---------------------
+
+
+[[webelementfacade]]
+==== Using WebElementFacade variables directly
+
+Instead of declaring WebElement variables in Page Objects and then calling element() or $() to wrap them in WebElementFacades, you can now declare WebElementFacade variables directly inside the Page Objects. This will make the Page Object code simpler more readable.
+
+So, instead of writing,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElement searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return element(searchButton).isVisible();
+    }
+    ...
+}      
+---------------------
+
+you can write,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElementFacade searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return searchButton.isVisible();
+    }
+    ...
+}      
 ---------------------
 
 ==== Using direct XPath and CSS selectors
