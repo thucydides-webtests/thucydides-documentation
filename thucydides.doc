@@ -725,6 +725,38 @@ public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
 
 A test is also considered pending if any of the steps used in that test are pending. For a step to be pending, it needs to be annotated with the +@Pending+ annotation.
 
+===== Junit assumptions
+
+You can use junit http://junit.sourceforge.net/javadoc/org/junit/Assume.html[assumptions] in your tests or step methods to . Steps where the conditions under assumptions fail are marked as PENDING instead of ERROR. Subsequent steps are also marked as PENDING.
+
+-------------------
+@Test
+public void administrator_adds_an_existing_company_to_the_system() {}
+
+@Test
+public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
+    steps.login_to_admin_page();
+    steps.open_companies_list();
+    steps.select_add_company();
+    // More to come        
+}
+-------------------
+
+-------------------
+...
+@Step
+public void open_companies_list() {
+  Assume.assumeThat(user.role, is("admin"));
+  CompaniesListPage page = pages().get(CompanyListPage.class); 
+  String companieslist = page.getCompaniesList();
+
+}
+...
+-------------------
+
+In the above example, if the assumption in step +open_companies_list+ fails, it and all susbequent steps will be marked PENDING.
+
+
 ==== Running tests in a single browser session 
 
 Normally, Thucydides opens a new browser session for each test. This helps ensure that each test is isolated and independent. However, sometimes it is useful to be able to run tests in a single browser session, in particular for performance reasons on read-only screens. You can do this by using the 'uniqueSession' attribute in the @Managed annotation, as shown below. In this case, the browser will open at the start of the test case, and not close until all of the tests have been executed.
@@ -860,6 +892,23 @@ thucydides.tests.feature "history reports"
 thucydides.tests.epic "reporting"
 thucydides.tests.epic "audit"
 thucydides.tests.priority "high"
+----------------
+
+
+==== Filter tests by tags in jUnit
+
+You can filter tests by tag while running Thucydides. This can be achieved by providing a single tag or a comma separated list of tags from command line. If provided, only classes and/or methods with tags in this list will be executed.
+
+Example:
+
+----------------
+mvn verify -Dtags="iteration:I1"
+----------------
+
+or
+
+----------------
+mvn verify -Dtags="color:red,flavor:strawberry"
 ----------------
 
 
@@ -2610,6 +2659,14 @@ If you want to set default values for some of these properties for your own deve
 thucydides.activate.firebugs = true     
 thucydides.browser.width = 1200  
 ---------------
+
+  * *tags*: Comma separated list of tags. If provided, only jUnit classes and/or methods with tags in this list will be executed. For example,
+
+---------------
+mvn verify -Dtags="iteration:I1"
+
+mvn verify -Dtags="color:red,flavor:strawberry"
+---------------  
 
 == Integrating with issue tracking systems 
  
