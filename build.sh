@@ -28,6 +28,4 @@ a2x -v -k -L -fchunked --xsl-file=docbook-xsl/custom-chunked.xsl  --asciidoc-opt
 a2x -fpdf -dbook --fop --no-xmllint -v thucydides.doc
 a2x -fpdf -dbook --fop --no-xmllint -v thucydides-fr.doc
 
-#a2x -v -k -L -fchunked --xsl-file=docbook-xsl/chunked.xsl  --asciidoc-opts "-a icons -a toc -a numbered"  --xsltproc-opts "--stringparam chunk.section.depth 1" -dbook -D target/fr thucydides-fr.doc   
-
 sleep 30

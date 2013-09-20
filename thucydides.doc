@@ -13,7 +13,7 @@ v0.9.12, August 2012
 [preface]
 == Copyright
 
-Copyright © 2011 John Ferguson Smart.
+Copyright © 2011-2013 John Ferguson Smart.
 
 Online version published by Wakaleo Consulting.
 
@@ -2299,7 +2299,7 @@ image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=475]
 
 You typically run Thucydides as part of the build process (either locally or on a CI server). In addition to the +webdriver.driver+ option discussed about, you can also pass a number of parameters in as system properties to customize the way the tests are run. The full list is shown here:
 
-	* *webdriver.driver*: What browser do you want your tests to run in: firefox, chrome or iexplorer.
+	* *webdriver.driver*: What browser do you want your tests to run in: firefox, chrome, iexplorer, phantomjs, etc.
 
 	* *webdriver.base.url*: The default starting URL for the application, and base URL for relative paths.
 
@@ -2359,6 +2359,24 @@ If you want to set default values for some of these properties for your own deve
 thucydides.activate.firebugs = true     
 thucydides.browser.width = 1200  
 ---------------
+
+=== Providing your own Firefox profile
+
+If you need to configure your own customized Firefox profile, you can do this by using the Thucydidies.useFirefoxProfile() method before you start your tests. For example:
+
+---------------
+@Before
+public void setupProfile() {
+    FirefoxProfile myProfile = new FirefoxProfile();
+    myProfile.setPreference("network.proxy.socks_port",9999);
+    myProfile.setAlwaysLoadNoFocusLib(true);
+    myProfile.setEnableNativeEvents(true);
+    Thucydides.useFirefoxProfile(myProfile);
+}    
+
+@Test
+public void aTestUsingMyCustomProfile() {...}          
+----------------
 
 == Integrating with issue tracking systems 
  
@@ -3472,4 +3490,8 @@ If you have both easyb and JUnit Thucydides tests, you will need to specify both
 .Articles
 - Dr. Dobb's Journal. http://drdobbs.com/open-source/232300277/[Project of the Month: Thucydides], December. 2011.              
 - JavaWorld. http://www.javaworld.com/javaworld/jw-08-2011/110823-atdd-for-web-apps.html[Acceptance test driven development for web applications], August. 2011.  
-- JavaWorld. http://www.javaworld.com/javaworld/jw-10-2011/111018-thucydides-for-atdd.html[Selenium 2 and Thucydides for ATDD], August. 2011.              
+- JavaWorld. http://www.javaworld.com/javaworld/jw-10-2011/111018-thucydides-for-atdd.html[Selenium 2 and Thucydides for ATDD], August. 2011.
+
+
+
+
