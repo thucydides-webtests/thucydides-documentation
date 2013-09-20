@@ -1,6 +1,6 @@
 = The Thucydides Reference Manual
 John Ferguson Smart
-v0.9.12, August 2012
+v0.9.125, September 2013
 
 :author: John Ferguson Smart
 :data-uri:
@@ -118,7 +118,7 @@ When it comes to implementing the tests themselves, Thucydides also provides man
 
 === Creating a new Thucydides project
 
-The easiest way to start a new Thucydides project is to use the Maven archetype. Two archetypes are currently available: one for using Thucydides with JUnit, and another if you also want to write your acceptance tests (or a part of them) using http://www.easyb.org/[easyb]. In this section, we will create a new Thucydides project using the Thucydides archetype, and go through the essential features of this project.
+The easiest way to start a new Thucydides project is to use the Maven archetype. Three archetypes are currently available: one for using Thucydides with JUnit, another if you also want to write your acceptance tests (or a part of them) using http://www.easyb.org/[easyb], and finally one more to help you write acceptance tests in jBehave. In this section, we will create a new Thucydides project using the Thucydides archetype, and go through the essential features of this project.
 
 From the command line, you can run *mvn archetype:generate* and then select the *net.thucydides.thucydides-easyb-archetype* archetype from the proposed list of archetypes. Or you can use your favorite IDE to generate a new Maven project using an archetype.
                            
@@ -357,6 +357,13 @@ The final piece in the puzzle is the +Application.java+ class, which is a way of
 This is what enables Thucydides to generate the aggregate reports about features and stories.
 
 In the following sections, we will look at different aspects of writing automated tests with Thucydides in more detail.
+
+=== Setting custom web driver capabilities
+You can set custom web driver capabilities by passing a semi-colon separated list of capabilities in the property +thucydides.driver.capabilities+. For example,
+
+--------------------------
+"build:build-1234; max-duration:300; single-window:true; tags:[tag1,tag2,tag3]"
+--------------------------
  
 == Writing Acceptance Tests with Thucydides  
 
@@ -718,6 +725,38 @@ public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
 
 A test is also considered pending if any of the steps used in that test are pending. For a step to be pending, it needs to be annotated with the +@Pending+ annotation.
 
+===== Junit assumptions
+
+You can use junit http://junit.sourceforge.net/javadoc/org/junit/Assume.html[assumptions] in your tests or step methods to . Steps where the conditions under assumptions fail are marked as PENDING instead of ERROR. Subsequent steps are also marked as PENDING.
+
+-------------------
+@Test
+public void administrator_adds_an_existing_company_to_the_system() {}
+
+@Test
+public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
+    steps.login_to_admin_page();
+    steps.open_companies_list();
+    steps.select_add_company();
+    // More to come        
+}
+-------------------
+
+-------------------
+...
+@Step
+public void open_companies_list() {
+  Assume.assumeThat(user.role, is("admin"));
+  CompaniesListPage page = pages().get(CompanyListPage.class); 
+  String companieslist = page.getCompaniesList();
+
+}
+...
+-------------------
+
+In the above example, if the assumption in step +open_companies_list+ fails, it and all susbequent steps will be marked PENDING.
+
+
 ==== Running tests in a single browser session 
 
 Normally, Thucydides opens a new browser session for each test. This helps ensure that each test is isolated and independent. However, sometimes it is useful to be able to run tests in a single browser session, in particular for performance reasons on read-only screens. You can do this by using the 'uniqueSession' attribute in the @Managed annotation, as shown below. In this case, the browser will open at the start of the test case, and not close until all of the tests have been executed.
@@ -778,6 +817,102 @@ public class WorkWithBackendTest {
 }
 ----------------             
 
+=== Adding tags to test cases
+
+You can add arbitrary tags to your tests both in junit and easyb. Tags provide context to tests. A tag has two parts - a +type+ and a +name+. Thucydides reports categorize tests based on the specified tag types. 
+
+Tag types are arbitrary and you can add as many types as you wish. By default, a +story+ tag type is automatically added to each test. An example of tags on Thucydides reports is given in <<fig-tags-in-reports>>
+
+[[fig-tags-in-report]]
+.Tag types appear on top. Each tag type displays the tag names.
+image::figs/tags-in-reports.png[scaledwidth="80%", width=800]
+
+==== Adding tags to junit tests
+
+Tags are added to junit tests using +@WithTag+ annotation. The following will add a tag of type +epic+ with name "Audit".
+
+[source,java]
+----------------
+@WithTag(type="epic", name="Audit")
+----------------
+
+If no type is defined, the default tag type is assumed to be +feature+. In other words, the following two tags are equivalent.
+
+[source,java]
+----------------
+@WithTag(type="feature", name="Definition-lookup")
+----------------
+
+[source,java]
+----------------
+@WithTag(name="Definition-lookup")
+----------------
+
++@WithTag+ has an alternative, more concise syntax using a colon (:) to separate the tag type and name. For example,
+
+[source,java]
+----------------
+@WithTag("epic:Audit")
+----------------
+
+or,
+
+[source,java]
+----------------
+@WithTag("feature:Definition-lookup")
+----------------
+
+Multiple tags can be added using +@WithTags+ annotation or it's shorter cousin - +@WithTagValuesOf+. For example,
+
+[source,java]
+----------------
+@WithTags (
+        {
+                @WithTag(name="lookups", type="feature"),
+                @WithTag(name="release-2", type="release")
+
+        }
+)
+----------------
+
+Using +@WithTagValuesOf+, the above can be written more succinctly as: 
+
+[source,java]
+----------------
+@WithTagValuesOf({"lookups", "release:release-2"})
+----------------
+
+==== Adding tags to easyb tests
+
+Tags can be easily added to easyb stories in the form of +thucydides.tests.<type>+ to the stories. For example,
+
+[source,java]
+----------------
+thucydides.tests.feature "history reports"
+thucydides.tests.epic "reporting"
+thucydides.tests.epic "audit"
+thucydides.tests.priority "high"
+----------------
+
+
+==== Filter tests by tags in jUnit
+
+You can filter tests by tag while running Thucydides. This can be achieved by providing a single tag or a comma separated list of tags from command line. If provided, only classes and/or methods with tags in this list will be executed.
+
+Example:
+
+----------------
+mvn verify -Dtags="iteration:I1"
+----------------
+
+or
+
+----------------
+mvn verify -Dtags="color:red,flavor:strawberry"
+----------------
+
+
+
 === Running Thucydides in different browsers
 
 Thucydides supports all browser-based WebDriver drivers, i.e. Firefox, Internet Explorer and Chrome, as well as HTMLUnit. By default, it will use Firefox. However, you can override this option using the +webdriver.driver+ system property. To set this from the command line, you could do the following:
@@ -810,6 +945,15 @@ For this to work with JUnit, however, you need to pass the webdriver.driver prop
             </configuration>
         </plugin> 
 -------------------
+
+==== Chrome switches
+
+Thucydides supports +chrome.switches+ system property to define options for the Chrome driver. This lets you set useful chrome options such as +"--homepage=about:blank" or "--no-first-run"+. You can provide any number of options, separated by commas, e.g.:
+
+-------------------
+$mvn verify -Dchrome.switches="homepage=about:blank,--no-first-run"
+-------------------
+
 
 === Forcing the use of a particular driver in a test case or test
 
@@ -1254,6 +1398,48 @@ When these tests are executed, the JBehave steps combine with the Thucydides ste
 .You can see the requirements that you need to implement in the requirements report
 image::figs/thucydides-test-report.png[scaledwidth="80%", width=475]
 
+=== JBehave Maven Archetype
+
+A jBehave archetype is availble to help you jumpstart a new project. As usual, you can run mvn archetype:generate from the command line and then select the net.thucydides.thucydides-jbehave-archetype archetype from the proposed list of archetypes. Or you can use your favorite IDE to generate a new Maven project using an archetype.
+
+This archetype creates a project directory structure similar to the one shown here:
+
+--------------
++ main
+    + java
+       + SampleJBehave
+           + pages
+               - DictionaryPage.java
+           + steps
+               - EndUserSteps.java
++ test
+    + java
+       + SampleJBehave
+           + jbehave
+               - AcceptanceTestSuite.java
+               - DefinitionSteps.java
+    + resources
+        + SampleJBehave
+            + stories
+                + consult_dictionary
+                    - LookupADefinition.story
+--------------
+
+=== Running all tests in a single browser window
+
+All web tests can be run in a single browser window using either by setting the thucydides.use.unique.browser system property or programmatically using runThucydides().inASingleSession() inside the junit runner.
+
+---------------------------------------------------------------------
+package net.thucydides.showcase.jbehave;
+
+import net.thucydides.jbehave.ThucydidesJUnitStories;
+
+public class JBehaveTestCase extends ThucydidesJUnitStories {
+    public JBehaveTestCase() {
+      runThucydides().inASingleSession();
+    } 
+}
+---------------------------------------------------------------------
 
 == Implementing Step Libraries       
 
@@ -1378,7 +1564,7 @@ When you need to use a page object in one of your steps, you just ask for one fr
 FindAJobPage page = getPages().get(FindAJobPage.class);
 ---------------------
 
-If you want to make sure you are one the right page, you can use the +currentPageAt()+ method. This will check the page class for any +@At+ annotations present in the Page Object class and, if present, check that the current URL corresponds to the URL pattern specified in the annotation. For example, when you invoke it using +currentPageAt()+, the following Page Object will check that the current URL is precisely http://www.apache.org.
+If you want to make sure you are on the right page, you can use the +currentPageAt()+ method. This will check the page class for any +@At+ annotations present in the Page Object class and, if present, check that the current URL corresponds to the URL pattern specified in the annotation. For example, when you invoke it using +currentPageAt()+, the following Page Object will check that the current URL is precisely http://www.apache.org.
 
 
 ---------------------
@@ -1482,6 +1668,12 @@ You should never try to implement the +open()+ method yourself. In fact, it is f
 ---------------------
 
 === Working with web elements  
+
+.Important
+************************************************
+The element() method described below is no longer
+needed. See <<webelementfacade, Web Element Facade section>> for details.
+************************************************
 
 ==== Checking whether elements are visible
 
@@ -1624,6 +1816,40 @@ or
 ---------------------
 element(field).waitUntilVisible()
 element(button).waitUntilNotVisible()
+---------------------
+
+
+[[webelementfacade]]
+==== Using WebElementFacade variables directly
+
+Instead of declaring WebElement variables in Page Objects and then calling element() or $() to wrap them in WebElementFacades, you can now declare WebElementFacade variables directly inside the Page Objects. This will make the Page Object code simpler more readable.
+
+So, instead of writing,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElement searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return element(searchButton).isVisible();
+    }
+    ...
+}      
+---------------------
+
+you can write,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElementFacade searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return searchButton.isVisible();
+    }
+    ...
+}      
 ---------------------
 
 ==== Using direct XPath and CSS selectors
@@ -2051,6 +2277,16 @@ This saves a lot of typing - our +getSearchResults()+ method now looks like this
 
 And since the Thucydides matchers work with both Java objects and Maps, the matcher expressions will be very similar. The only difference is that the Maps returned are indexed by the text values contained in the table headings, rather than by java-friendly property names.
 
+You can also read tables without headers (i.e., <th> elements) by specifying your own headings using the +withColumns+ method. For example:
+
+
+---------
+    List<Map<Object, String>> tableRows =
+                    HtmlTable.withColumns("First Name","Last Name", "Favorite Colour")
+                             .readRowsFrom(page.table_with_no_headings);
+---------
+
+
 You can also use the HtmlTable class to select particular rows within a table to work with. For example, another test scenario for the Maven Search page involves clicking on an artifact and displaying the details for that artifact. The test for this might look something like this:
 
 
@@ -2120,6 +2356,31 @@ public class WhenDisplayingTableContents {
     }
 }
 ---------------------
+
+=== Switching to another page
+
+A method, switchToPage() is provided in PageObject class to make it convenient to return a new PageObject after navigation from within a method of a PageObject class. For example,
+
+------------------
+
+@DefaultUrl("http://mail.acme.com/login.html")
+public class EmailLoginPage extends PageObject {
+ 
+    ...
+    public void forgotPassword() {
+        ...
+        forgotPassword.click();
+        ForgotPasswordPage forgotPasswordPage = this.switchToPage(ForgotPasswordPage.class);
+        forgotPasswordPage.open();
+        ...
+    }
+    ...
+}
+
+
+------------------
+
+
 
 == Spring Integration
 
@@ -2299,7 +2560,7 @@ image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=475]
 
 You typically run Thucydides as part of the build process (either locally or on a CI server). In addition to the +webdriver.driver+ option discussed about, you can also pass a number of parameters in as system properties to customize the way the tests are run. The full list is shown here:
 
-	* *webdriver.driver*: What browser do you want your tests to run in: firefox, chrome, iexplorer, phantomjs, etc.
+	* *webdriver.driver*: What browser do you want your tests to run in: firefox, chrome, iexplorer, phantomjs, etc. Basic support for iPhone and Android drivers is also available.
 
 	* *webdriver.base.url*: The default starting URL for the application, and base URL for relative paths.
 
@@ -2307,9 +2568,20 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *thucydides.outputDirectory*: Where should reports be generated.
 
-	* *thucydides.only.save.failing.screenshots* : Should Thucydides only store screenshots for failing steps? This can save disk space and speed up the tests a little. It is very useful for data-driven testing.
+	* *thucydides.only.save.failing.screenshots* : Should Thucydides only store screenshots for failing steps? This can save disk space and speed up the tests a little. It is very useful for data-driven testing. This property is now deprecated. Use +thucydides.take.screenshots+ instead.
 
-	* *thucydides.restart.browser.frequency*: During data-driven tests, some browsers (Firefox in particular) may slow down over time due to memory leaks. To get around this, you can get Thucydides to start a new browser session at regular intervals when it executes data-driven tests.
+  * *thucydides.verbose.screenshots* : Set this to +true+ for saving screenshots at every web element action (like click(), typeAndEnter(), type(), typeAndTab() etc.). This property is now deprecated. Use +thucydides.take.screenshots+ instead.
+
+  * *thucydides.take.screenshots* : Set this property to have more finer control on how screenshots are taken. This property can take the folowing values:
+    ** *FOR_EACH_ACTION* : Similar to +thucydides.verbose.screenshots+
+    ** *BEFORE_AND_AFTER_EACH_STEP*,
+    ** *AFTER_EACH_STEP*, and
+    ** *FOR_FAILURES* : Similar to +thucydides.only.save.failing.screenshots+
+
+	
+  * *thucydides.verbose.steps* : Set this property to provide more detailed logging of WebElementFacade steps when tests are run.
+
+  * *thucydides.restart.browser.frequency*: During data-driven tests, some browsers (Firefox in particular) may slow down over time due to memory leaks. To get around this, you can get Thucydides to start a new browser session at regular intervals when it executes data-driven tests.
 
 	* *thucycides.step.delay*: Pause (in ms) between each test step.
 
@@ -2321,15 +2593,33 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *thucydides.resized.image.width* : Value in pixels. If set, screenshots are resized to this size. Useful to save space.
 
+  * *thucydides.keep.unscaled.screenshots* : Set to +true+ if you wish to save the original unscaled screenshots. This is set to +false+ by default.
+
+  * *thucydides.store.html.source* : Set this property to +true+ to save the HTML source code of the screenshot web pages. This is set to +false+ by default. 
+
 	* *thucydides.issue.tracker.url*: The URL used to generate links to the issue tracking system.
 	
 	* *thucydides.activate.firebugs* : * Activate the Firebugs and FireFinder plugins for Firefox when running the WebDriver tests. This is useful for debugging, but is not recommended when running the tests on a build server. 
 
-    * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
+  * *thucydides.batch.strategy* : Defines batch strategy. Allowed values - DIVIDE_EQUALLY (default) and DIVIDE_BY_TEST_COUNT. DIVIDE_EQUALLY will simply divide the tests equally across all batches. This could be inefficient if the number of tests vary a lot between test classes. A DIVIDE_BY_TEST_COUNT strategy could be more useful in such cases as this will create batches based on number of tests.
 
-     * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
+  * *thucydides.batch.count*: If batch testing is being used, this is the size of the batches being executed.
 
-	* *thucydides.restart.browser.frequency* : Restart the browser every so often during data-driven tests. 
+  * *thucydides.batch.number* :If batch testing is being used, this is the number of the batch being run on this machine. 
+
+  * *thcydides.reports.show.step.details* : Displays detailed step results in the test result tables. This property is set to false by default.
+
+  * *thucydides.use.unique.browser* : Set this to run all web tests in a single browser. 
+
+  * *thucydides.locator.factory* :   Set this property to override the default locator factory with another locator factory (for ex., AjaxElementLocatorFactory or DefaultElementLocatorFactory). By default, Thucydides uses a custom locator factory called DisplayedElementLocatorFactory.
+
+  * *thucydides.driver.capabilities* : Use this property to pass a semi-colon separated list of capabilities to the web driver.
+
+  * *thucydides.native.events* : Activate and deactivate native events for Firefox by setting this property to +true+ or +false+.
+
+  * *security.enable_java* : Set this to true to enable Java support in Firefox. By default, this is set to false as it slows down the web driver.
+
+  * *thucydides.test.requirements.basedir* : The base folder of the sub-module where the jBehave stories are kept. It is assumed that this directory contains sub folders src/test/resources. If this property is set, the requirements are read from src/test/resources under this folder instead of the classpath or working directory. This property is used to support situations where your working directory is different from the requirements base dir (for example when building a multi-module project from parent pom with requirements stored inside a sub-module)
                                  
 An example of using these parameters is shown here:
 
@@ -2351,7 +2641,17 @@ On Windows, it would be something like:
 C:\Projects\myproject>mvn test -Dwebdriver.firefox.profile=C:\Users\John Smart\AppData\Roaming\Mozilla\Firefox\Profiles\mvxjy48u.default
 ------------------
 
-	* *thucydides.history*: The directory in which build history summary data is stored for each project. Each project has it's own sub-folder within this directory. Defaults to ~./thucydides.
+  * *firefox.preferences*: A semicolon separated list of Firefox configuration settings. For ex.,
+
+------------------
+-Dfirefox.preferences="browser.download.folderList=2;browser.download.manager.showWhenStarting=false;browser.download.dir=c:\downloads"
+------------------
+
+Integer and boolean values will be converted to the corresponding types in the Firefox preferences; all other values will be treated as Strings. You can set a boolean value to true by simply specifying the property name, e.g. +-Dfirefox.preferences=app.update.silent+.
+
+A complete reference to Firefox's configuration settings is given http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries[here].
+	
+  * *thucydides.history*: The directory in which build history summary data is stored for each project. Each project has it's own sub-folder within this directory. Defaults to ~./thucydides.
  
 If you want to set default values for some of these properties for your own development environment (e.g. to always activate the Firebugs plugin on your development machine), create a file called +thucydides.properties+ in your home directory, and set any default values here. These values will still be overridden by any values defined in the environment variables. An example is shown here:
 
@@ -2377,6 +2677,13 @@ public void setupProfile() {
 @Test
 public void aTestUsingMyCustomProfile() {...}          
 ----------------
+  * *tags*: Comma separated list of tags. If provided, only jUnit classes and/or methods with tags in this list will be executed. For example,
+
+---------------
+mvn verify -Dtags="iteration:I1"
+
+mvn verify -Dtags="color:red,flavor:strawberry"
+---------------  
 
 == Integrating with issue tracking systems 
  
@@ -2964,6 +3271,44 @@ As with JUnit, you will need to pass in the proper parameters to easyb for this 
 
 Once this is done, Thucydides will update the relevant JIRA issues automatically whenever the tests are executed.
  
+== Managing screenshots
+By default, Thucydides saves a screenshot for every step executed during the tests. Thucydides can be configured to control when screenshots are stored.
+
+=== Configuring when screenshots are taken
+The property +thucydides.take.screenshots+ can be set to configure how often the sreenshots are taken. This property can take the folowing values:
+
+* +FOR_EACH_ACTION+ : Saves a screenshot at every web element action (like click(), typeAndEnter(), type(), typeAndTab() etc.). 
+
+* +BEFORE_AND_AFTER_EACH_STEP+ : Saves a screeshot before and asfter every step.
+
+* +AFTER_EACH_STEP+ : Saves a screenshot after every step
+
+* +FOR_FAILURES+ : Saves screenshots only for failing steps. This can save disk space and speed up the tests a little. It is very useful for data-driven testing. 
+
+=== Using annotations to control screenshots
+An even more granular level of control is possible using annotations. You can annotate any test or step method (or any method used by a step or test) with the +@Screenshots+ annotation to override the number of screenshots taken within this step (or sub-step). Some sample uses are shown here:
+
+------------------
+@Step
+@Screenshots(onlyOnFailures=true)
+public void screenshots_will_only_be_taken_for_failures_from_here_on() {…}
+
+@Test
+@Screenshots(forEachStep=true)
+public void should_take_screenshots_for_each_step_in_this_test() {…}
+
+@Test
+@Screenshots(forEachAction=true)
+public void should_take_screenshots_for_each_action_in_this_test() {…}
+------------------
+
+
+=== Taking screenshots at any arbitrary point during a step
+It is possible to have even finer control on capturing screenshots in the tests. Using the +takeScreenshot+ method, you can  instruct Thucydides to take a screenshot at any arbitrary point in the step irrespective of the screenshot level set using configuration or annotations.
+
+Simply call +Thucydides.takeScreenshot()+ in the step methods whenever you want a screenshot to be captured.
+
+
 === Increasing the size of screenshots
 Sometimes the default window size is too small to display all of the application screen in the screenshots. You can increase the size of the window Thucydides opens by providing the +thucydides.browser.width+ and +thucydides.browser.height+ system properties. For example, to use a browser window with dimensions of 1200x1024, you could do the following:
 
@@ -3011,6 +3356,40 @@ Selenium needs memory to take screenshots, particularly if the screens are large
     </configuration>
 </plugin>
 ------------------   
+
+=== Saving raw screenshots
+Thucydides saves only rescaled screenshots by default. This is done to help reduce the disk space taken by reports. If you require to save the original unscaled screenshots, this default can be easily overridden by setting the property, +thucydides.keep.unscaled.screenshots+ to +true+.
+
+=== Saving HTML source files for screenshots
+It is possible to save html source files for the screenshots by setting the property, +thucydides.store.html.source+ to +true+. Html source files are not saved by default to conserve disk space.
+
+=== Blurring sensitive screenshots
+For security/privacy reasons, it may be required to blur sensitive screenshots in Thucydides reports. This can be done by annotating the test methods or steps with the annotation +@BlurScreenshots+. When defined on a test, all screenshots for that test will be blurred. When defined on a step, only the screenshot for that step will be blurred. @BlurredScreenshot takes a string parameter with values +LIGHT, MEDIUM+ or +HEAVY+ to indicate the amount of blurring. For example,
+
+------------------
+@Test
+@BlurScreenshots("HEAVY")
+public void looking_up_the_definition_of_pineapple_should_display_the_corresponding_article() {
+    endUser.is_the_home_page();
+    endUser.looks_for("pineapple");
+    endUser.should_see_definition_containing_words("A thorny fruit");
+}
+------------------
+
+A screen at various blur levels is shown below.
+
+[[fig-screen_blur_light]]
+.A lightly blurred screenshot
+image::figs/blur/light.png[scaledwidth="80%", width=475]
+
+[[fig-screen_blur_medium]]
+.A medium blurred screenshot
+image::figs/blur/medium.png[scaledwidth="80%", width=475]
+
+[[fig-screen_blur_heavy]]
+.A heavily blurred screenshot
+image::figs/blur/heavy.png[scaledwidth="80%", width=475]
+
                
 == Managing state between steps                  
 
@@ -3145,7 +3524,9 @@ Thucydides lets you perform data-driven testing using test data in a CSV file. Y
 
 Next, create a test class containing properties that match the columns in the test data. Each property should be a property by the JavaBeans definition, with a matching getter and setter. The test class will typically contain one or more tests that use these properties as parameters to the test step or Page Object methods.
 
-The class will also contain the *@UseTestDataFrom* annotation to indicate where to find the CSV file (this can either be a file on the classpath or a relative or absolute file path - putting the data set on the class path (e.g. in +src/test/resources+) makes the tests more portable). You also use the *@RunWith* annotation as well as the other usual Thucydides annotations (+@Managed+, +@ManagedPages+ and +@Steps+). 
+The class will also contain the *@UseTestDataFrom* annotation to indicate where to find the CSV file (this can either be a file on the classpath or a relative or absolute file path - putting the data set on the class path (e.g. in +src/test/resources+) makes the tests more portable). 
+
+You also use the *@RunWith* annotation as well as the other usual Thucydides annotations (+@Managed+, +@ManagedPages+ and +@Steps+). 
 
 An example of such a class is shown here:
 
@@ -3205,6 +3586,23 @@ An example of such a class is shown here:
 	        this.placeOfBirth = placeOfBirth;
 	    }
 	}
+---------
+
+You can also specify multiple file paths separated by path separators – colon, semi-colon or comma. For example:
+
+---------
+ 
+	@UseTestDataFrom("test-data/simple-data.csv,test-data-subfolder/simple-data.csv")
+
+---------
+
+
+You can also configure an arbitrary directory using system property +thucydides.data.dir+ and then refer to it as +$DATADIR+ variable in the annotation.
+
+---------
+ 
+	@UseTestDataFrom("$DATADIR/simple-data.csv")
+
 ---------
 
 Each row of test data needs to be distinguished in the generated reports. By default, Thucydides will call the +toString()+ method. If you provide a public method returning a String that is annotated by the +@Qualifier+ annotation, then this method will be used to distinguish data sets. It should return a value that is unique to each data set.
@@ -3422,6 +3820,8 @@ You also can use as many data files as you want, even in the same test. You can 
 	}
 -------------------
 
+By the way we need to use +ThucydidesRunner+ for the test cases instead of +ThucydidesParameterizedRunner+.
+
 Note that, as a shortcut, you can dispense with the setter methods and just declare the relevant fields public. So the Steps class shown above could be rewritten like this:
 
 
@@ -3482,6 +3882,175 @@ mvn verify -Deasyb.batch.count=3 -Deasyb.batch.number=1
 ------------------
 
 If you have both easyb and JUnit Thucydides tests, you will need to specify both options.
+
+=== Test count based batch strategy
+By default, test cases are divided equally among batches. This could be inefficient if some test cases have more tests than others. In such situations, a different batch strategy, +DIVIDE_BY_TEST_COUNT+ can be defined using the system property +thucydides.batch.strategy+. This strategy will evenly distribute test cases across batches based on number of test methods in each test case.
+
+------------------
+mvn verify -Dthucydides,batch.strategy=DIVIDE_BY_TEST_COUNT -Dthucydides.batch.count=3 -Dthucydides.batch.number=1
+------------------
+
+== Experimental features
+=== Integration with FluentLineum
+You can use https://github.com/FluentLenium/FluentLenium[FluentLenium‘s] fluent API with Thucydides. The best way to use FluentLenium within Thucydides is to use ThucydidesFluentAdapter which is available in PageObject. Here’s an example of the same PageObject written in the traditional style and with FluentLenium.
+
+------------------
+import ch.lambdaj.function.convert.Converter;
+import net.thucydides.core.annotations.DefaultUrl;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import net.thucydides.core.pages.PageObject;
+
+import java.util.List;
+
+import static ch.lambdaj.Lambda.convert;
+
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class DictionaryPage extends PageObject {
+
+    @FindBy(name="search")
+    private WebElement searchTerms;
+
+    @FindBy(name="go")
+    private WebElement lookupButton;
+
+    public DictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        element(searchTerms).type(keyword);
+    }
+
+    public void lookup_terms() {
+        element(lookupButton).click();
+    }
+
+    public List getDefinitions() {
+        WebElement definitionList = getDriver().findElement(By.tagName("ol"));
+        List results = definitionList.findElements(By.tagName("li"));
+        return convert(results, toStrings());
+    }
+
+    private Converter<WebElement, String> toStrings() {
+        return new Converter<WebElement, String>() {
+            public String convert(WebElement from) {
+                return from.getText();
+            }
+        };
+    }
+}
+------------------
+
+and with FluentLineum
+
+------------------
+import ch.lambdaj.function.convert.Converter;
+import net.thucydides.core.annotations.DefaultUrl;
+import net.thucydides.core.pages.PageObject;
+import org.fluentlenium.core.domain.FluentList;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import java.util.List;
+
+import static ch.lambdaj.Lambda.convert;
+import static org.fluentlenium.core.filter.FilterConstructor.withName;
+
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class FluentDictionaryPage extends PageObject {
+
+    public FluentDictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        fluent().fill("input", withName("search")).with(keyword);
+    }
+
+    public void lookup_terms() {
+        fluent().click("input", withName("go"));
+    }
+
+    public List getDefinitions() {
+        FluentList results = fluent().findFirst("ol").find("li");
+        return results.getTexts();
+    }
+}
+------------------
+
+=== Shortcut for the element() method
+Another new experimental feature introduces the ability to replace the commonly-used element() method with ‘$’, as illustrated in the following examples:
+
+------------------
+    ...
+    @FindBy(name="search")
+    private WebElement searchTerms;
+
+    @FindBy(name="go")
+    private WebElement lookupButton;
+
+    public DictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        $(searchTerms).type(keyword);
+    }
+
+    public void lookup_terms() {
+        $(lookupButton).click();
+    }
+
+    public void click_on_article(int articleNumber) {
+        $("//section[@id='searchResults']/article[" + articleNumber + "]//a").click();
+    }
+
+    public String getHeading() {
+        return $("section>h1").getText()
+    }
+}
+
+------------------
+
+=== Using Step methods to document test cases
+Methods in the Step library can be used to provide additional documentation for the test scenarios in Thucydides reports. You can pass valid HTML text as parameter to @Step methods in the step library. This will show up as formatted text in the reports on the step details page. The following screenshot demonstrates this.
+
+[[fig-html-argument-shows-up-in-test-report]]
+.HTML formatted text, if passed to a step method will be displayed as shown. This can be useful for annotating or documenting the tests with helpful information.
+image::figs/html-argument-shows-up-in-test-report.jpg[scaledwidth="80%", width=475]
+
+This is achieved by creating a dummy @Step method called description that takes a String parameter. At runtime, the tests supply this method with formatted html text as parameter.
+
+------------------
+...
+@Step
+public void description(String html) {
+    //do nothing
+}
+
+public void about(String description, String...remarks) {
+    String html =
+    "<h2 style=\"font-style:italic;color:black\">" + description + "</h2>" +
+    "<div><p>Remarks:</p>" +
+    "<ul style=\"margin-left:5%; font-weight:200; color:#434343; font-size:10px;\">";
+
+    for (String li : remarks) html += "<li>" + li + "</li>";
+
+    html += "<ul></div>";
+
+    description(html);
+}
+...
+------------------
+
+
 
 [[further-reading]]
    
