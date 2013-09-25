@@ -2577,9 +2577,9 @@ This will produce a summary report in the generated Maven site documentation, wi
 .Thucydides test reports in the Maven site
 image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=475]
 
-== Converting existing xUnit and Lettuce test cases into Thucydides report
+== Converting existing xUnit, specFlow and Lettuce test cases into Thucydides report
 
-With the Thucydides maven plugin added as described in the previous section, you can also import existing xUnit and Lettuce test cases into a Thucydides report. For this, add the +source+ directory of test cases and +format+ (xunit or lettuce) parameters to the plugin configuration. 
+With the Thucydides maven plugin added as described in the previous section, you can also import existing xUnit, http://www.specflow.org/[specflow] and http://lettuce.it/index.html[Lettuce] test cases into a Thucydides report. For this, add the +source+ directory of test cases and +format+ (xunit, specflow or lettuce) parameters to the plugin configuration. 
 
 --------------------
 <reporting>
@@ -4049,6 +4049,11 @@ Another new experimental feature introduces the ability to replace the commonly-
 }
 
 ------------------
+
+=== Retrying failed tests
+
+Sometimes it is required to retry a failed test. This can be achieved by setting the system property +max.retries+ to the number of times you want failed tests to be retried.  
+
 
 === Using Step methods to document test cases
 Methods in the Step library can be used to provide additional documentation for the test scenarios in Thucydides reports. You can pass valid HTML text as parameter to @Step methods in the step library. This will show up as formatted text in the reports on the step details page. The following screenshot demonstrates this.
