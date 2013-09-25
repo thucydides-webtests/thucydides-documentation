@@ -1193,6 +1193,28 @@ When you run these stories (without having implemented any actual tests), you wi
 .You can see the requirements that you need to implement n the requirements report
 image::figs/jbehave-requirements-report.png[scaledwidth="80%", width=475]
 
+===== Narrative in asciidoc format
+
+Narratives can be written in http://www.methods.co.nz/asciidoc/[Asciidoc] for richer formatting. Set the +narrative.format+ property to +asciidoc+ to allow Thucydides to parse the narrative in asciidoc format.
+
+For example, the following narrative,
+
+---------------------
+Item search
+
+Narrative:
+In order to find the items I am interested in faster
+As a +buyer+
+*I want to be able to list all the ads with a particular keyword in the description or title*.
+---------------------
+
+will be rendered on the report as shown below.
+
+[[asciidoc_narrative]]
+.Narrative with asciidoc formatting
+image::figs/asciidoc_narrative.png[scaledwidth="80%", width=475]
+
+
 ==== Customizing the requirements module
 
 You can also easily extend the Thucydides requirements support so that it fits in to your own system. This is a two-step process. First, you need to write an implementation of the `RequirementsTagProvider` interface.
@@ -2691,6 +2713,8 @@ mvn verify -Dtags="iteration:I1"
 
 mvn verify -Dtags="color:red,flavor:strawberry"
 ---------------  
+
+  * *narrative.format*: Set this property to 'asciidoc' to activate using http://www.methods.co.nz/asciidoc/[Asciidoc] format in narrative text. 
 
 == Integrating with issue tracking systems 
  
