@@ -1,6 +1,6 @@
 = Thucydides: manuel de référence
 John Ferguson Smart
-v1.0.0, janvier 2012
+v0.9.125, septembre 2013
 
 :author: John Ferguson Smart
 :data-uri:
@@ -13,7 +13,7 @@ v1.0.0, janvier 2012
 [preface]
 == Copyright
 
-Copyright © 2011 John Ferguson Smart.
+Copyright © 2011-2013 John Ferguson Smart.
 
 Version en ligne publiée par Wakaleo Consulting.
 
@@ -118,8 +118,7 @@ Quand vient le moment d'implémenter les tests eux-mêmes, Thucydides apporte é
 
 === Créer un nouveau projet Thucydides
 
-
-La façon la plus simple de démarrer un nouveau projet Thucydides est d'utiliser l'archétype Maven. Deux archétypes sont actuellement disponibles: un pour utiliser Thucydides avec JUnit, et l'autre si vous voulez également écrire vos tests de recette (ou une partie d'entre eux) en utilisant http://www.easyb.org/[easyb]. Dans cette section, nous créerons un nouveau projet Thucydides en utilisant l'archétype Thucydides, puis nous aborderons les fonctionnalités essentielles de ce projet.
+La façon la plus simple de démarrer un nouveau projet Thucydides est d'utiliser l'archétype Maven. Trois archétypes sont actuellement disponibles: un pour utiliser Thucydides avec JUnit, un autre si vous voulez également écrire vos tests de recette (ou une partie d'entre eux) en utilisant http://www.easyb.org/[easyb] et enfin un supplémentaire pour vous aider à écrire vos tests de recette avec jBehave. Dans cette section, nous créerons un nouveau projet Thucydides en utilisant l'archétype Thucydides, puis nous aborderons les fonctionnalités essentielles de ce projet.
 
 En ligne de commandes, vous pouvez exécuter mvn archetype:generate puis choisir l'archétype net.thucydides.thucydides-easyb-archetype dans la liste des archétypes proposés. Ou bien, vous pouvez utiliser votre IDE préféré pour générer un nouveau projet Maven en utilisant un archétype.
 
@@ -351,6 +350,14 @@ La pièce finale du puzzle est la classe +Application.java+ qui est un moyen de 
 C'est ce qui permet à Thucydides de générer un rapport global concernant les fonctionnalités et les histoires.
 
 Dans les sections suivantes, nous verrons plus en détails les différents aspects de l'écriture des tests automatiques avec Thucydides.
+
+=== Configurer des capacités personnalisées pour le pilote web
+
+Vous pouvez configurer des capacités personnalisées pour le pilote web en passant une liste de capacités séparées par des points virgules dans la propriété +thucydides.driver.capabilities+. Par exemple, 
+
+--------------------------
+"build:build-1234; max-duration:300; single-window:true; tags:[étiquette1,étiquette2,étiquette3]"
+--------------------------
  
 == Écrire des tests de recette avec Thucydides
 
@@ -696,6 +703,37 @@ public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
 
 Un test sera également considéré comme étant en attente si au moins l'une des étapes utilisées dans ce test est en attente. Pour qu'une étape soit en attente, elle doit être annotée avec +@Pending+.
 
+===== hypothèses JUnit ( assumptions )
+
+Vous pouvez utiliser les http://junit.sourceforge.net/javadoc/org/junit/Assume.html[hypothèses] JUnit dans vos tests ou vos méthodes d'étapes. Les étapes pour lesquelles les conditions sous hypothèse échouent sont marquées EN SUSPEND au lieu de ERREUR. Les étapes suivantes sont également marquées comme étant EN SUSPEND.
+
+-------------------
+@Test
+public void administrator_adds_an_existing_company_to_the_system() {}
+
+@Test
+public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
+    steps.login_to_admin_page();
+    steps.open_companies_list();
+    steps.select_add_company();
+    // More to come        
+}
+-------------------
+
+-------------------
+...
+@Step
+public void open_companies_list() {
+  Assume.assumeThat(user.role, is("admin"));
+  CompaniesListPage page = pages().get(CompanyListPage.class); 
+  String companieslist = page.getCompaniesList();
+
+}
+...
+-------------------
+
+Dans l'exemple suivant, si l'hypothèse dans l'étape +open_companies_list+ échoue, celle-ci et toutes les étapes suivantes seront marquées comme EN SUSPEND.
+
 ==== Exécuter des tests dans une unique session du navigateur
 
 Normalement, Thucydides ouvre une session du navigateur pour chaque test. Ceci permet de s'assurer plus facilement que chaque test est isolé et indépendant. Cependant, parfois, il est utile d'être capable d'exécuter des tests dans une même session du navigateur, en particulier pour des raisons de performance sur des écrans en lecture seule. Vous pouvez faire cela en utilisant l'attribut 'uniqueSession' de l'annotation @Managed comme montré ci-dessous. Dans ce cas, le navigateur va s'ouvrir au début du cas de test et ne se fermera pas tant que tous les tests n'auront pas été exécutés.
@@ -754,6 +792,99 @@ public class WorkWithBackendTest {
 }
 ----------------             
 
+=== Ajouter des étiquettes aux cas de test
+
+vous pouvez ajouter des étiquettes arbitraires à vos tests à la fois pour JUnit et easyb. Les étiquettes fournissent un contexte aux tests. Une étiquette comporte deux parties - un +type+ et un +nom+. Les rapports Thucydides catégorisent les tests en se basant sur les types d'étiquettes indiqués.
+
+Les types d'étiquettes sont arbitraires et vous pouvez ajouter autant de types que vous le souhaitez. Par défaut, un type d'étiquette +story+ est automatiquement ajouté à chaque test. Un exemple d'étiquettes dans les rapports Thucydides figure dans <<fig-tags-in-reports>>
+
+[[fig-tags-in-report]]
+.Les types d'étiquettes apparaissent en haut. Chaque type d'étiquette affiche les noms d'étiquettes.
+image::figs/tags-in-reports.png[scaledwidth="80%", width=800]
+
+==== Ajouter des étiquettes aux tests JUnit
+
+Les étiquettes sont ajoutées aux tests JUnit en utilisant l'annotation +@WithTag+. Ce qui suit va ajouter une étiquette de type +epic+ avec le nom "Audit".
+
+[source,java]
+----------------
+@WithTag(type="epic", name="Audit")
+----------------
+
+Si aucun type n'est défini, on suppose que le type d'étiquette par défaut est +feature+. En d'autres modes, les deux étiquettes suivantes sont équivalentes.
+
+[source,java]
+----------------
+@WithTag(type="feature", name="Definition-lookup")
+----------------
+
+[source,java]
+----------------
+@WithTag(name="Definition-lookup")
+----------------
+
++@WithTag+ possède une syntaxe alternative plus concise utilisant un deux points pour séparer le type et le nom de l'étiquette. Par exemple,
+
+[source,java]
+----------------
+@WithTag("epic:Audit")
+----------------
+
+ou,
+
+[source,java]
+----------------
+@WithTag("feature:Definition-lookup")
+----------------
+
+Plusieurs étiquettes peuvent être ajoutées en utilisant l'annotation +@WithTags+ ou sa cousine plus courte - +@WithTagValuesOf+. Par exemple,
+
+[source,java]
+----------------
+@WithTags (
+        {
+                @WithTag(name="lookups", type="feature"),
+                @WithTag(name="release-2", type="release")
+
+        }
+)
+----------------
+
+En utilisant +@WithTagValuesOf+, ce qui précède peut être écrit de la façon plus concise suivante :
+
+[source,java]
+----------------
+@WithTagValuesOf({"lookups", "release:release-2"})
+----------------
+
+==== Ajouter des étiquettes aux tests easyb
+
+Des étiquettes peuvent facilement être ajoutées aux histoires easyb sous la forme +thucydides.tests.<type>+. Par exemple, 
+
+[source,java]
+----------------
+thucydides.tests.feature "history reports"
+thucydides.tests.epic "reporting"
+thucydides.tests.epic "audit"
+thucydides.tests.priority "high"
+----------------
+
+==== Filtrer les tests grâce aux étiquettes dans JUnit
+
+Vous pouvez filtrer les tests par étiquette lors de l'exécution de Thucydides. Ceci peut être réalisé en indiquant en ligne de commande une seule étiquette ou une liste d'étiquettes séparées par des virgules. Si elle(s) est(sont) fournie(s), seules les classes et/ou les méthodes ayant une étiquette présente dans la liste seront exécutées.
+
+Exemple:
+
+----------------
+mvn verify -Dtags="iteration:I1"
+----------------
+
+ou
+
+----------------
+mvn verify -Dtags="color:red,flavor:strawberry"
+----------------
+
 === Exécuter Thucydides dans différents navigateurs
 
 Thucydides gère tous les pilotes WebDriver de navigateurs, i.e. Firefox, Internet Explorer et Chrome ainsi que HTMLUnit. Par défaut, il utilisera Firefox. Cependant, vous pouvez passer outre cette option en utilisant la propriété système +webdriver.driver+. Pour l'utiliser en ligne de commandes, vous pouvez procéder comme suit:
@@ -783,6 +914,14 @@ Cependant, pour que ceci fonctionne avec JUnit, vous devez passer cette proprié
                 </systemPropertyVariables>
             </configuration>
         </plugin> 
+-------------------
+
+==== Options Chrome
+
+Thucydides gère la propriété système +chrome.switches+ pour définir des options pour le pilote Chrome. Ceci vous permet d'indiquer des options chrome très utiles telles que +"--homepage=about:blank" ou "--no-first-run"+. Vous pouvez indiquer autant d'options que vous voulez en les séparant par des virgules, par exemple :
+
+-------------------
+$mvn verify -Dchrome.switches="homepage=about:blank,--no-first-run"
 -------------------
 
 === Forcer l'utilisation d'un pilote spécifique dans un cas de test ou dans un test
@@ -1024,6 +1163,27 @@ Quand vous lancez ces histoires (sans avoir implémenter un seul vrai test), vou
 .Vous pouvez voir les exigences que vous devez implémenter dans les rapports d'exigences
 image::figs/jbehave-requirements-report.png[scaledwidth="80%", width=475]
 
+===== Les narrations au format asciidoc
+
+Les narrations peuvent être écrites en http://www.methods.co.nz/asciidoc/[Asciidoc] pour une mise en forme plus riche. Positionnez la propriété +narrative.format+ à +asciidoc+ pour permettre à Thucydides d'analyser la narration au format asciidoc.
+
+Par exemple, la narration suivante,
+
+---------------------
+Item search
+
+Narrative:
+In order to find the items I am interested in faster
+As a +buyer+
+*I want to be able to list all the ads with a particular keyword in the description or title*.
+---------------------
+
+sera affichée dans le rapport comme montré ci-dessous.
+
+[[asciidoc_narrative]]
+.Narration avec un format asciidoc
+image::figs/asciidoc_narrative.png[scaledwidth="80%", width=475]
+
 ==== Personnaliser le module d'exigences
 
 Vous pouvez également facilement étendre la gestion des exigences de Thucydides de telle façon qu'elle s'adapte à votre propre système. C'est un processus en deux étapes. D'abord, vous devez écrire une implémentation de l'interface `RequirementsTagProvider`.
@@ -1232,6 +1392,48 @@ Quand ces tests sont exécutés, les étapes JBehave les combinent avec les éta
 .Vous pouvez voir les exigences que vous devez implémenter dans le rapport d'exigences
 image::figs/thucydides-test-report.png[scaledwidth="80%", width=475]
 
+=== Archétype Maven JBehave
+
+Un archétype jBehave est disponible pour vous aider à démarrer un nouveau projet. Comme d'habitude, vous pouvez exécuter mvn archetype:generate depuis la ligne de commande puis choisir l'archétype net.thucydides.thucydides-jbehave-archetype dans la liste des archétypes proposés. Ou bien, vous pouvez utiliser votre IDE favori pour générer un nouveau projet Maven en utilisant un archétype.
+
+Cette archétype crée une structure de répertoires du projet semblable à celle montrée ici :
+
+--------------
++ main
+    + java
+       + SampleJBehave
+           + pages
+               - DictionaryPage.java
+           + steps
+               - EndUserSteps.java
++ test
+    + java
+       + SampleJBehave
+           + jbehave
+               - AcceptanceTestSuite.java
+               - DefinitionSteps.java
+    + resources
+        + SampleJBehave
+            + stories
+                + consult_dictionary
+                    - LookupADefinition.story
+--------------
+
+=== Exécuter tous les tests dans une seule fenêtre du navigateur
+
+Tous les tests web peuvent être exécutés dans une seule fenêtre du navigateur en configurant la propriété système thucydides.use.unique.browser ou via programmation en utilisant runThucydides().inASingleSession() dans le lanceur JUnit.
+
+---------------------------------------------------------------------
+package net.thucydides.showcase.jbehave;
+
+import net.thucydides.jbehave.ThucydidesJUnitStories;
+
+public class JBehaveTestCase extends ThucydidesJUnitStories {
+    public JBehaveTestCase() {
+      runThucydides().inASingleSession();
+    } 
+}
+---------------------------------------------------------------------
 
 == Implémenter des bibliothèques d'étapes                       
 
@@ -1450,6 +1652,12 @@ Vous ne devriez jamais essayer d'implémenter la méthode +open()+ vous-même. E
 
 === Travailler avec des éléments web
 
+.Important
+************************************************
+La méthode element() décrite ci-après n'est désormais plus 
+nécessaire. Voir <<webelementfacade, la section Façade d'élément web>> pour les détails. 
+************************************************
+
 ==== Vérifier si des éléments sont visibles
 
 La méthode element de la classe PageObject offre une API souple et commode pour interagir avec les éléments web en fournissant certaines fonctionnalités additionnelles fréquemment utilisées qui ne sont pas fournies nativement par l'API WebDriver. Par exemple, vous pouvez vérifier qu'un élément est visible comme illustré ici:
@@ -1580,6 +1788,39 @@ element(field).waitUntilVisible()
 element(button).waitUntilNotVisible()
 ---------------------
 
+[[webelementfacade]]
+==== Utiliser directement des variables WebElementFacade
+
+Au lieu de déclarer des variables WebElement dans les objets pages puis d'appeler element() ou $() pour les encapsuler dans des WebElementFacades, vous pouvez désormais déclarer directement des variables WebElementFacade dans les objets pages. Ceci rendra le code de l'objet page plus lisible.
+
+Ainsi, au lieu d'écrire,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElement searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return element(searchButton).isVisible();
+    }
+    ...
+}      
+---------------------
+
+vous pouvez écrire,
+
+---------------------
+public class FindAJobPage extends PageObject {
+
+    WebElementFacade searchButton;
+
+    public boolean searchButtonIsVisible() {
+        return searchButton.isVisible();
+    }
+    ...
+}      
+---------------------
+
 ==== Utiliser des sélecteurs XPath et CSS
 
 Un autre moyen d'accéder à des éléments web consiste à utiliser une expression XPath ou CSS. Vous pouvez utiliser la méthode +element+ avec une expression XPath pour faire cela plus facilement. Par exemple, imaginez que votre application web nécessite de cliquer sur un élément de liste contenant un code postal donné. Une façon de faire serait la suivante:
@@ -1625,7 +1866,7 @@ Si l'élément n'apparaît pas immédiatement, vous pouvez attendre qu'il appara
 indexPage.waitForRenderedElements(By.xpath("//h2[.='A title that is not immediately visible']"));
 ----------------------
 
-Une alternantive à la syntaxe précédente consiste à utiliser la méthode plus souple +waitFor+ qui prend un sélecteur CSS ou XPath comme paramètre:
+Une alternative à la syntaxe précédente consiste à utiliser la méthode plus souple +waitFor+ qui prend un sélecteur CSS ou XPath comme paramètre:
 
 
 ---------------------
@@ -1974,6 +2215,14 @@ Ceci économise beaucoup de saisie - notre méthode +getSearchResults()+ ressemb
 
 Et puisque les matchers Thucydides fonctionnent à la fois avec les objets Java et les Maps, les expressions des matchers seront très semblables. La seule différence est que les Maps renvoyés sont indexés par les valeurs textuelles contenues dans les en-têtes de la table au lieu que ce soit dans les noms de propriété compatibles Java.
 
+Vous pouvez également lire des tables sans en-tête (i.e, éléments <th>) en indiquant vos propres en-têtes en utilisant la méthode +withColumns+. Par exemple :
+
+---------
+    List<Map<Object, String>> tableRows =
+                    HtmlTable.withColumns("First Name","Last Name", "Favorite Colour")
+                             .readRowsFrom(page.table_with_no_headings);
+---------
+
 Vous pouvez également utiliser la classe HtmlTable pour choisir des lignes particulières dans une table pour travailler avec. Par exemple, un autre scénario de test pour la page de recherche Maven implique de cliquer sur un artefact et d'en afficher les détails. Le test pour ceux-ci ressemble à quelque chose comme ça:
 
 -------------
@@ -2039,6 +2288,29 @@ public class WhenDisplayingTableContents {
     }
 }
 ---------------------
+
+=== Basculer vers une autre page
+
+La classe PageObject offre une méthode, switchToPage(), pour faciliter le retour vers un nouvel objet Page après avoir navigué depuis une méthode d'une classe PageObject. Par exemple, 
+
+------------------
+
+@DefaultUrl("http://mail.acme.com/login.html")
+public class EmailLoginPage extends PageObject {
+ 
+    ...
+    public void forgotPassword() {
+        ...
+        forgotPassword.click();
+        ForgotPasswordPage forgotPasswordPage = this.switchToPage(ForgotPasswordPage.class);
+        forgotPasswordPage.open();
+        ...
+    }
+    ...
+}
+
+
+------------------
 
 == Intégration avec Spring
 
@@ -2205,12 +2477,34 @@ Ceci produira un rapport résumé dans la documentation de site Maven générée
 .Rapports de tests Thucydides dans le site Maven
 image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=475]
 
+== Convertir les cas de tests xUnit, specFlow et Lettuce existant dans un rapport Thucydides
+
+Une fois le plugin maven Thucydides ajouté comme décrit dans la section précédente, vous pouvez également importer des cas de tests existant http://www.specflow.org/[specflow] et http://lettuce.it/index.html[Lettuce] dans un rapport Thucydides. Pour cela, ajouter le répertoire +source+ des cas de test et les paramètres +format+ (xunit, specflow ou lettuce) à la configuration du plugin. 
+
+--------------------
+<reporting>
+    <plugins>
+        ...
+        <plugin>
+            <groupId>net.thucydides.maven.plugins</groupId>
+            <artifactId>maven-thucydides-plugin</artifactId>
+            <version>${thucydides.version}</version>
+            <configuration>
+              <source>src</source>
+              <format>xunit</format>
+            </configuration>
+        </plugin>
+    </plugins>
+</reporting>
+--------------------
 
 == Exécuter des tests Thucydides en ligne de commandes
 
 Typiquement, vous exécuterez Thucydides comme une partie du processus de build (soit localement, soit sur un serveur d'intégration continue). En plus de l'option +webdriver.driver+ déjà vue, vous pouvez également passer un certain nombre de paramètres en tant que propriétés système pour personnaliser la façon dont les tests sont exécutés. En voici la liste complète:
 
-	* *webdriver.driver*: Quel navigateur vous voulez que vos tests utilisent: firefox, chrome ou iexplorer.
+  * *properties*: chemin absolu du fichier de propriétés dans lequel les valeurs par défaut des propriétés système Thucydides sont définies. +~/thucydides.properties+ par défaut.
+
+	* *webdriver.driver*: le navigateur avec lequel vous voulez que vos tests soient exécutés : firefox, chrome, iexplorer, phantomjs, etc. Une prise en charge basique des pilotes iPhone et Android est également disponible.
 
 	* *webdriver.base.url*: L'URL de départ par défaut pour l'application, et l'URL de base pour les chemins relatifs.
 
@@ -2218,9 +2512,19 @@ Typiquement, vous exécuterez Thucydides comme une partie du processus de build 
 
 	* *thucydides.outputDirectory*: Où les rapports doivent être générés.
 
-	* *thucydides.only.save.failing.screenshots* : Est-ce que Thucydides doit n'enregistrer des captures d'écran que pour les tests en échec ? Ceci permet d'économiser de l'espace disque et augmente un peu la vitesse des tests. C'est très utile pour les tests dirigés par les données.
+	* *thucydides.only.save.failing.screenshots* : Est-ce que Thucydides doit n'enregistrer des captures d'écran que pour les tests en échec ? Ceci permet d'économiser de l'espace disque et augmente un peu la vitesse des tests. C'est très utile pour les tests dirigés par les données. Cette propriété est désormais obsolète. Utiliser +thucydides.take.screenshots+ à la place.
 
-	* *thucydides.restart.browser.frequency*: Lors de tests dirigés par les données, certains navigateurs (Firefox en particulier) peuvent ralentir au bout d'un moment à cause de fuites mémoire. Pour pallier cela, vous pouvez demander à Thucydides de démarrer une nouvelle session du navigateur à intervalles réguliers quand il exécute des tests dirigés par les données.
+  * *thucydides.verbose.screenshots* : Mettez ceci à +true+ pour enregistrer une capture d'écran pour chaque action d'un élément web (comme click(), typeAndEnter(), type(), typeAndTab() etc.). Cette propriété est maintenant obsolète. Utiliser à la place +thucydides.take.screenshots+.
+
+  * *thucydides.take.screenshots* : Configurer cette propriété pour avoir un contrôle plus fin sur la façon dont les captures d'écran sont prises. Cette propriété peut prendre les valeurs suivantes :
+    ** *FOR_EACH_ACTION* : identique à +thucydides.verbose.screenshots+
+    ** *BEFORE_AND_AFTER_EACH_STEP*,
+    ** *AFTER_EACH_STEP* et 
+    ** *FOR_FAILURES* : identiques à +thucydides.only.save.failing.screenshots+
+	
+  * *thucydides.verbose.steps* : Configurer cette propriété pour fournir une journalisation plus détaillée des étapes WebElementFacade quand les tests sont exécutés.
+
+  * *thucydides.restart.browser.frequency*: Lors de tests dirigés par les données, certains navigateurs (Firefox en particulier) peuvent ralentir au bout d'un moment à cause de fuites mémoire. Pour pallier cela, vous pouvez demander à Thucydides de démarrer une nouvelle session du navigateur à intervalles réguliers quand il exécute des tests dirigés par les données.
 
 	* *thucycides.step.delay*: Pause (en ms) entre chaque étape de test.
 
@@ -2232,15 +2536,33 @@ Typiquement, vous exécuterez Thucydides comme une partie du processus de build 
 
 	* *thucydides.resized.image.width* : Valeur en pixels. Si elle est spécifiée, les captures d'écran sont redimensionnées à cette taille. Utile pour économiser de l'espace disque.
 
+  * *thucydides.keep.unscaled.screenshots* : À mettre à +true+ si vous voulez enregistrer des captures d'écrans à la taille d'origine. Vaut +false+ par défaut.
+
+  * *thucydides.store.html.source* : Mettre cette propriété à +true+ pour enregistrer le code source HTML des pages web capturées. Elle vaut +false+ par défaut.
+
 	* *thucydides.issue.tracker.url*: L'URL utilisée pour générer les liens vers le système de suivi des bugs.
 	
 	* *thucydides.activate.firebugs* : Active les plugins Firebug et FireFinder pour Firefox quand des tests WebDriver sont exécutés. Ceci est utile pour déboguer mais pas recommandé quand les tests sont exécutés sur un serveur de build.
 
-    * *thucydides.batch.count*: Si le test de batch est utilisé, ceci est le nombre des batches exécutés.
+  * *thucydides.batch.strategy* : Définit la stratégie de batch. Valeurs possibles - DIVIDE_EQUALLY (valeur par défaut) et DIVIDE_BY_TEST_COUNT. DIVIDE_EQUALLY va simplement répartir les tests équitablement entre tous les batchs. Ceci peut être inefficace si le nombre de tests varie beaucoup d'une classe de test à l'autre. La stratégie DIVIDE_BY_TEST_COUNT peut être beaucoup plus utile dans de tels cas puisqu'elle va créer des batchs en se basant sur le nombre de tests.
 
-    * *thucydides.batch.number* : Si le test de batch est utilisé, ceci est le numéro du batch exécuté sur cette machine.
+  * *thucydides.batch.count*: Si le test de batch est utilisé, ceci est le nombre des batches exécutés.
 
-	* *thucydides.restart.browser.frequency* : Redémarre le navigateur à la fréquence indiquée lors des tests dirigés par les données.
+  * *thucydides.batch.number* : Si le test de batch est utilisé, ceci est le numéro du batch exécuté sur cette machine.
+
+  * *thcydides.reports.show.step.details* : Affiche des résultats détaillées d'étapes dans les tables de résultat des tests. Cette propriété est positionnée à false par défaut. 
+
+  * *thucydides.use.unique.browser* : Positionner ceci pour exécuter tous les tests web dans un seul navigateur.
+
+  * *thucydides.locator.factory* : Positionner cette propriété pour surcharger la fabrique par défaut de localisateur (par ex., AjaxElementLocatorFactory ou DefaultElementLocatorFactory). Par défaut, Thucydides utilise une fabrique de localisateur personnalisée appelée DisplayedElementLocatorFactory.
+
+  * *thucydides.driver.capabilities* : Utiliser cette propriété pour passer une liste séparée par des virgules des capacités du pilote web.
+
+  * *thucydides.native.events* : Activer et désactiver les événements natifs de Firefox en positionnant cette propriété à +true+ ou +false+.
+
+  * *security.enable_java* : Mettre ceci à vrai pour activer la prise en charge Java dans Firefox. Par défaut, c'est positionné à faux car ça ralentit le pilote web.
+
+  * *thucydides.test.requirements.basedir* : le répertoire de base du sous-module où les histoires jBehave sont conservées. Il est supposé que ce répertoire contient les sous répertoires src/test/resources. Si cette propriété est positionnée, les exigences sont lues depuis ce répertoire au lieu du classpath ou du répertoire de travail. Cette propriété est utilisée pour gérer des situations dans lesquelles votre répertoire de travail est différent du répertoire de base des exigences (par exemple on construit un projet multi modules du pom parent avec des exigences stockées dans un sous-module)
 
 Un exemple d'utilisation de ces paramètres est montré ici:                                 
 
@@ -2262,14 +2584,51 @@ Sur Windows, ce serait quelque chose comme:
 C:\Projects\myproject>mvn test -Dwebdriver.firefox.profile=C:\Users\John Smart\AppData\Roaming\Mozilla\Firefox\Profiles\mvxjy48u.default
 ------------------
 
+  * *firefox.preferences*: Une liste séparée par des virgules des paramètres de configuration de Firefox. Par exemple, 
+
+------------------
+-Dfirefox.preferences="browser.download.folderList=2;browser.download.manager.showWhenStarting=false;browser.download.dir=c:\downloads"
+------------------
+
+Les valeurs entières et booléennes seront converties dans les types correspondant dans les préférences Firefox; toutes les autres valeurs seront traitées comme des chaînes de caractères. Vous pouvez positionner une valeur booléenne à vrai simplement en indiquant le nom de la propriété, par exemple +-Dfirefox.preferences=app.update.silent+.
+
+Un document de référence complet des paramètres de configuration de Firefox est disponible http://kb.mozillazine.org/Firefox_:_FAQs_:_About:config_Entries[ici].
+
 	* *thucydides.history*: Le répertoire dans lequel les données de résumé de l'historique des builds sont sauvegardées pour chaque projet. Chaque projet possède son propre sous-répertoire dans ce répertoire. Par défaut, c'est ~./thucydides.
 
-Si vous voulez configurer des valeurs par défaut pour certaines de ces propriétés pour votre propre environnement de développement (par exemple, toujours activer le plugin Firebug sur votre machine de développement), créez un fichier appelé +thucydides.properties+ dans votre répertoire personnel et réglez-y les valeurs voulues. Ces valeurs seront toujours surchargées par celles définies dans les variables d'environnement. Un exemple est montré ici:
+Si vous voulez configurer des valeurs par défaut pour certaines de ces propriétés pour votre propre environnement de développement (par exemple, toujours activer le plugin Firebug sur votre machine de développement), créez un fichier appelé +thucydides.properties+ dans votre répertoire personnel (ou tout fichier de propriétés défini en utilisant la propriété système +properties+) et réglez-y les valeurs par défaut voulues. Ces valeurs seront toujours surchargées par celles définies dans les variables d'environnement. Un exemple est montré ici:
 
 ---------------
 thucydides.activate.firebugs = true     
 thucydides.browser.width = 1200  
 ---------------
+
+=== Fournir votre propre profil Firefox
+
+Si vous avez besoin de configurer votre propre profil Firefox personnalisé, vous pouvez le faire en utilisant la méthode Thucydidies.useFirefoxProfile() avant de lancer vos tests. Par exemple :
+
+---------------
+@Before
+public void setupProfile() {
+    FirefoxProfile myProfile = new FirefoxProfile();
+    myProfile.setPreference("network.proxy.socks_port",9999);
+    myProfile.setAlwaysLoadNoFocusLib(true);
+    myProfile.setEnableNativeEvents(true);
+    Thucydides.useFirefoxProfile(myProfile);
+}    
+
+@Test
+public void aTestUsingMyCustomProfile() {...}          
+----------------
+  * *tags*: Liste séparée par des deux points d'étiquettes. Si elle est fournie, seules les classes JUnit et/ou les méthodes avec des étiquettes présentes dans cette liste seront exécutées. Par exemple,
+
+---------------
+mvn verify -Dtags="iteration:I1"
+
+mvn verify -Dtags="color:red,flavor:strawberry"
+---------------  
+
+  * *narrative.format*: Positionnez cette propriété à 'asciidoc' pour activer l'utilisation du format http://www.methods.co.nz/asciidoc/[Asciidoc] dans les textes de narration. 
 
 == Intégrer avec les systèmes de suivi de bugs
 
@@ -2829,7 +3188,48 @@ Comme avec JUnit, vous devez passer les paramètres appropriés à easyb pour qu
 
 Une fois que ceci est fait, Thucydides mettra automatiquement à jour les entrées JIRA appropriées à chaque fois que les tests seront exécutés.
 
+== Gérer les captures d'écran
+
+Par défaut, Thucydides enregistre une capture d'écran pour chaque étape exécutée pendant les tests. Thucydides peut être configuré pour contrôler quand enregistrer des captures d'écran.
+
+=== Configurer quand des captures d'écran sont prises
+
+La propriété +thucydides.take.screenshots+ peut être utilisée pour configurer la fréquence à laquelle les captures d'écran sont faites. Cette propriété peut prendre les valeurs suivantes :
+
+* +FOR_EACH_ACTION+ : Enregistre une capture d'écran à chaque action d'un élément web (telle que click(), typeAndEnter(), type(), typeAndTab() etc.). 
+
+* +BEFORE_AND_AFTER_EACH_STEP+ : Enregistre une capture d'écran avant et après chaque étape.
+
+* +AFTER_EACH_STEP+ : Enregistre une capture d'écran après chaque étape.
+
+* +FOR_FAILURES+ : Enregistre une capture d'écran seulement pour les étapes en échec. Ceci permet de préserver l'espace disque et accélère un peu les tests. C'est très utile pour les tests dirigés par les données.
+
+=== Utiliser des annotations pour contrôler les captures d'écran
+
+Il est possible d'utiliser un degré encore plus fin de contrôle en utilisant des annotations. vous pouvez annoter n'importe quelle méthode de test ou d'étape (ou n'importe quelle méthode utilisée par un test ou une méthode) avec l'annotation +@Screenshots+ pour surcharger le nombre des captures d'écran prises pour cette étape (ou sous-étape). Voici quelques exemples :
+
+------------------
+@Step
+@Screenshots(onlyOnFailures=true)
+public void screenshots_will_only_be_taken_for_failures_from_here_on() {…}
+
+@Test
+@Screenshots(forEachStep=true)
+public void should_take_screenshots_for_each_step_in_this_test() {…}
+
+@Test
+@Screenshots(forEachAction=true)
+public void should_take_screenshots_for_each_action_in_this_test() {…}
+------------------
+
+=== Prendre une capture d'écran à un moment arbitraire durant une étape
+
+Il est possible d'avoir un contrôle encore plus fin sur les captures d'écran dans les tests. En utilisant la méthode +takeScreenshot+, vous pouvez indiquer à Thucydides de prendre une capture d'écran à n'importe quel endroit de l'étape indépendemment du niveau de capture d'écran choisi via la configuration ou les annotations.
+
+Appelez simplement +Thucydides.takeScreenshot()+ dans les méthodes de test à chaque fois que vous voulez qu'une capture d'écran soit réalisée.
+
 === Augmenter la taille des captures d'écran 
+
 Parfois, la taille par défaut de la fenêtre est trop petite pour afficher tous les écrans de l'application dans les captures. Vous pouvez agrandir la taille de la fenêtre que Thucydides ouvre en fournissant les propriétés système +thucydides.browser.width+ et +thucydides.browser.height+. Par exemple, pour utiliser une fenêtre de navigateur de dimensions 1200x1024, vous devriez faire ce qui suit:
 
 ------------------   
@@ -2862,6 +3262,7 @@ Lorsque la largeur du navigateur est supérieure à 1000px, la vue diaporama dan
 Notez qu'il existe quelques problèmes avec cette fonctionnalité. En particulier, elle ne fonctionnera pas du tout avec Chrome, car Chrome, par conception, ne gère pas le redimensionnement de la fenêtre. De plus, puisque WebDriver utilise un vrai navigateur, la taille maximum sera limitée par la taille physique du navigateur. Cette limitation s'applique à la largeur du navigateur, étant donné que la longueur verticale totale de l'écran sera toujours enregistrée dans la capture d'écran même si celle-ci dépasse la hauteur d'une seule page et nécessite un ascenseur.
 
 ==== Captures d'écran et problèmes de dépassement de mémoire
+
 Selenium a besoin de mémoire pour prendre des captures d'écran, particulièrement si les écrans sont grands. Si Selenium n'a plus de mémoire quand il prend des captures d'écran, il journalise une erreur dans la sortie des tests. Dans ce cas, configurez le maven-surefire-plugin pour utiliser davantage de mémoire, comme illustré ici:
 
 ------------------   
@@ -2874,6 +3275,42 @@ Selenium a besoin de mémoire pour prendre des captures d'écran, particulièrem
     </configuration>
 </plugin>
 ------------------   
+
+=== Enregistrer des captures d'écran brutes
+
+Thucydides n'enregistre par défaut que des captures d'écran redimensionnées. Ceci est fait pour réduire l'espace disque utilisé par les rapports. Si vous avez besoin d'enregistrer des captures d'écran à la taille originale, ce réglage par défaut peut facilement être surchargé en réglant la propriété +thucydides.keep.unscaled.screenshots+ à +true+.
+
+=== Enregistrer des captures d'écran sous forme de fichiers source HTML
+
+Il est possible d'enregistrer des fichiers source html pour les captures d'écran en positionnant la propriété +thucydides.store.html.source+ à +true+. Les fichiers source Html ne sont pas enregistrés par défaut pour préserver l'espace disque.
+
+=== Flouter des captures d'écran sensibles
+
+Pour des raisons de sécurité ou de préservation de la vie privée, il peut être nécessaire de flouter des captures d'écran sensibles dans les rapports Thucydides. Ceci peut être fait en annotant les méthodes de test ou les étapes avec l'annotation +@BlurScreenshots+. Quand elle est définie sur un test, toutes les captures d'écran de ce test seront floutées. Quand elle est définie sur une étape, seules les captures d'écran de cette étape seront floutées. @BlurredScreenshot prend une chaîne de caractère en paramètre ayant la valeur +LIGHT, MEDIUM+ ou +HEAVY+ pour indiquer le niveau de flou. Par exemple, 
+
+------------------
+@Test
+@BlurScreenshots("HEAVY")
+public void looking_up_the_definition_of_pineapple_should_display_the_corresponding_article() {
+    endUser.is_the_home_page();
+    endUser.looks_for("pineapple");
+    endUser.should_see_definition_containing_words("A thorny fruit");
+}
+------------------
+
+Un écran à divers niveaux de flou est montré ci-dessous.
+
+[[fig-screen_blur_light]]
+.Une capture d'écran légèrement floutée
+image::figs/blur/light.png[scaledwidth="80%", width=475]
+
+[[fig-screen_blur_medium]]
+.Une capture d'écran moyennement floutée
+image::figs/blur/medium.png[scaledwidth="80%", width=475]
+
+[[fig-screen_blur_heavy]]
+.Une capture d'écran fortement floutée
+image::figs/blur/heavy.png[scaledwidth="80%", width=475]
 
 == Gérer l'état entre les étapes               
 
@@ -3000,7 +3437,9 @@ Thucydides vous permet d'effectuer des tests dirigés par les données en utilis
 
 Ensuite, créez une classe de test contenant les propriétés qui correspondent aux colonnes des données de test. Chaque propriété doit être une propriété au sens JavaBean, avec un getter et un setter correspondant. La classe de test contiendra typiquement un ou plusieurs tests qui utiliseront ces propriétés comme paramètres pour l'étape de test ou les méthodes de l'objet page.
 
-La classe contiendra également l'annotation *@UseTestDataFrom* pour indiquer où trouver le fichier CSV (celui-ci peut être soit un fichier dans le classpath, soit un chemin de fichier relatif ou absolu - mettre la série de données dans le classpath (par exemple dans +src/test/resources+) rend les tests davantage portables). Vous pouvez également utiliser l'annotation *@RunWith* ou tout autre annotation Thucydides usuelle (+@Managed+, +@ManagedPages+ et +@Steps+). 
+La classe contiendra également l'annotation *@UseTestDataFrom* pour indiquer où trouver le fichier CSV (celui-ci peut être soit un fichier dans le classpath, soit un chemin de fichier relatif ou absolu - mettre la série de données dans le classpath (par exemple dans +src/test/resources+) rend les tests davantage portables). 
+
+Vous pouvez également utiliser l'annotation *@RunWith* ou tout autre annotation Thucydides usuelle (+@Managed+, +@ManagedPages+ et +@Steps+). 
 
 Un exemple de ce type de classes est montré ici:
 
@@ -3059,6 +3498,22 @@ Un exemple de ce type de classes est montré ici:
 	        this.placeOfBirth = placeOfBirth;
 	    }
 	}
+---------
+
+Vous pouvez également indiquer plusieurs chemins d'accès de fichiers séparés par des séparateurs de chemin - deux points, point virgule ou virgule. Par exemple :
+
+---------
+ 
+	@UseTestDataFrom("test-data/simple-data.csv,test-data-subfolder/simple-data.csv")
+
+---------
+
+Vous pouvez également configurer un répertoire arbitraire en utilisant la propriété système +thucydides.data.dir+ puis vous y référer via la variable +$DATADIR+ dans l'annotation.
+
+---------
+ 
+	@UseTestDataFrom("$DATADIR/simple-data.csv")
+
 ---------
 
 Chaque ligne de données de test nécessite d'être distinguée dans les rapports générés. Par défaut, Thucydides appellera la méthode +toString()+. Si vous fournissez une méthode publique retournant une chaîne et annotée par +@Qualifier+, c'est cette méthode qui sera utilisée pour distinguer les séries de données. Elle doit renvoyer une valeur unique pour chacune des séries de données.
@@ -3272,6 +3727,8 @@ Vous pouvez également utiliser autant de fichiers que vous le souhaitez, y comp
 	}
 -------------------
 
+Au fait, nous devons utiliser +ThucydidesRunner+ pour les cas de tests au lieu de +ThucydidesParameterizedRunner+.
+
 Notez que, comme raccourci, vous pouvez omettre les méthodes setters et ne déclarer que les champs nécessaires comme publics. De cette façon, la classe d'étapes montré ci-dessus pourra être réécrite comme suit:
 
 ------------------   
@@ -3308,17 +3765,17 @@ Notez que, comme raccourci, vous pouvez omettre les méthodes setters et ne déc
 	}
 -------------------
 
-== Exécuter les tests Thucydides dans des batches parallèles
+== Exécuter les tests Thucydides dans des batchs parallèles
 
 Les tests web sont de bons candidats pour les tests concurrents, en théorie du moins, mais l'implémentation peut être tordue. Par exemple, bien qu'il soit assez facile de configurer à la fois JUnit et easyb pour exécuter des tests en parallèle, exécuter plusieurs instances WebDriver de Firefox en parallèle sur le même affichage, par exemple, à tendance à devenir non fiable. 
 
-La solution naturelle dans ce cas est de diviser les tests web en batches plus petits et d'exécuter chaque batch sur une machine différente et/ou sur des affichages virtuels différents. Quand chaque batch est terminé, les résultats peuvent être récupérés et agglomérés dans les rapports de test finaux.
+La solution naturelle dans ce cas est de diviser les tests web en batchs plus petits et d'exécuter chaque batch sur une machine différente et/ou sur des affichages virtuels différents. Quand chaque batch est terminé, les résultats peuvent être récupérés et agglomérés dans les rapports de test finaux.
 
-Cependant, séparer les tests en batches à la main à tendance à devenir pénible et non fiable - il est facile d'oublier d'ajouter un nouveau test à un batch, par exemple, ou d'avoir des batches inégalement chargés.
+Cependant, séparer les tests en batchs à la main à tendance à devenir pénible et non fiable - il est facile d'oublier d'ajouter un nouveau test à un batch, par exemple, ou d'avoir des batchs inégalement chargés.
 
-La dernière version de Thucydides vous permet de faire ceci automatiquement en distribuant vos cas de test équitablement dans des batches de taille donnée. En pratique, vous exécutez une tâche de build pour chaque batch. Vous devez indiquer deux paramètres quand vous exécutez chaque build: le nombre total de batches à exécuter (+thucydides.batch.count+) et le numéro du batch exécuté dans ce build (+thucydides.batch.number+).
+La dernière version de Thucydides vous permet de faire ceci automatiquement en distribuant vos cas de test équitablement dans des batchs de taille donnée. En pratique, vous exécutez une tâche de build pour chaque batch. Vous devez indiquer deux paramètres quand vous exécutez chaque build: le nombre total de batchs à exécuter (+thucydides.batch.count+) et le numéro du batch exécuté dans ce build (+thucydides.batch.number+).
 
-Par exemple, ce qui suit va diviser les cas de tests en 3 batches (+thucydides.batch.count+) et n'exécutera que le premier test de chaque batch (+thucydides.batch.number+):
+Par exemple, ce qui suit va diviser les cas de tests en 3 batchs (+thucydides.batch.count+) et n'exécutera que le premier test de chaque batch (+thucydides.batch.number+):
                                      
 ------------------
 mvn verify -Dthucydides.batch.count=3 -Dthucydides.batch.number=1
@@ -3331,6 +3788,182 @@ mvn verify -Deasyb.batch.count=3 -Deasyb.batch.number=1
 ------------------
 
 Si vous avez à la fois des tests Thucydides easyb et JUnit, vous devrez indiquer les deux types d'options.
+
+=== Stratégie de batch basée sur le décompte des tests
+
+Par défaut, les cas de test sont répartis également entre les batchs. Ceci peut être inefficace si certains cas de tests ont plus de tests que d'autres. Dans de telles situations, une stratégie de batch différente, +DIVIDE_BY_TEST_COUNT+, peut être définie en utilisant la propriété système +thucydides.batch.strategy+. Cette stratégie va distribuer équitablement les cas de tests entre les batchs en se basant sur le nombre de méthodes de test dans chacun des cas de test.
+
+------------------
+mvn verify -Dthucydides,batch.strategy=DIVIDE_BY_TEST_COUNT -Dthucydides.batch.count=3 -Dthucydides.batch.number=1
+------------------
+
+== Fonctionnalités expérimentales
+
+=== Intégration avec FluentLineum
+
+Vous pouvez utiliser l'API agile de https://github.com/FluentLenium/FluentLenium[FluentLenium] avec Thucydides. La meilleure façon d'utiliser FluentLenium dans Thucydides est d'utiliser ThucydidesFluentAdapter qui est disponible dans le PageObject. Voici un exemple du même PageObject écrit en style traditionnel et avec FluentLenium.
+
+------------------
+import ch.lambdaj.function.convert.Converter;
+import net.thucydides.core.annotations.DefaultUrl;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import net.thucydides.core.pages.PageObject;
+
+import java.util.List;
+
+import static ch.lambdaj.Lambda.convert;
+
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class DictionaryPage extends PageObject {
+
+    @FindBy(name="search")
+    private WebElement searchTerms;
+
+    @FindBy(name="go")
+    private WebElement lookupButton;
+
+    public DictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        element(searchTerms).type(keyword);
+    }
+
+    public void lookup_terms() {
+        element(lookupButton).click();
+    }
+
+    public List getDefinitions() {
+        WebElement definitionList = getDriver().findElement(By.tagName("ol"));
+        List results = definitionList.findElements(By.tagName("li"));
+        return convert(results, toStrings());
+    }
+
+    private Converter<WebElement, String> toStrings() {
+        return new Converter<WebElement, String>() {
+            public String convert(WebElement from) {
+                return from.getText();
+            }
+        };
+    }
+}
+------------------
+
+et avec FluentLineum
+
+------------------
+import ch.lambdaj.function.convert.Converter;
+import net.thucydides.core.annotations.DefaultUrl;
+import net.thucydides.core.pages.PageObject;
+import org.fluentlenium.core.domain.FluentList;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
+
+import java.util.List;
+
+import static ch.lambdaj.Lambda.convert;
+import static org.fluentlenium.core.filter.FilterConstructor.withName;
+
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class FluentDictionaryPage extends PageObject {
+
+    public FluentDictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        fluent().fill("input", withName("search")).with(keyword);
+    }
+
+    public void lookup_terms() {
+        fluent().click("input", withName("go"));
+    }
+
+    public List getDefinitions() {
+        FluentList results = fluent().findFirst("ol").find("li");
+        return results.getTexts();
+    }
+}
+------------------
+
+=== Raccourci pour la méthode element()
+
+Une autre nouvelle fonctionnalité expérimentale introduit la possibilité de remplacer la méthode element() communément utilisée avec '$', comme illustré dans les exemples suivants :
+
+------------------
+    ...
+    @FindBy(name="search")
+    private WebElement searchTerms;
+
+    @FindBy(name="go")
+    private WebElement lookupButton;
+
+    public DictionaryPage(WebDriver driver) {
+        super(driver);
+    }
+
+    public void enter_keywords(String keyword) {
+        $(searchTerms).type(keyword);
+    }
+
+    public void lookup_terms() {
+        $(lookupButton).click();
+    }
+
+    public void click_on_article(int articleNumber) {
+        $("//section[@id='searchResults']/article[" + articleNumber + "]//a").click();
+    }
+
+    public String getHeading() {
+        return $("section>h1").getText()
+    }
+}
+
+------------------
+
+=== Réessayer des tests en échec
+
+Il est parfois nécessaire de réessayer un test un échec. Ceci peut être réalisé en réglant la propriété système +max.retries+ avec le nombre de fois que vous voulez que les tests en échec soient réessayés.
+
+=== Utiliser des méthodes d'étape pour documenter des cas de test
+
+Les méthodes dans la bibliothèque d'étape peuvent être utilisées pour fournir de la documentation complémentaire pour les scénarios de test dans les rapports Thucydides. Vous pouvez passer du texte HTML valide en paramètre aux méthodes @Step dans la bibliothèque d'étapes. Ce texte apparaîtra sous forme de texte mis en forme dans les rapports sur la page des détails de l'étape. La capture d'écran suivante illustre ceci.
+
+[[fig-html-argument-shows-up-in-test-report]]
+.du texte formaté HTML, s'il est passé à une méthode d'étape, sera affiché comme illustré ici. Ceci peut être utile pour annoter ou documenter les tests avec des informations utiles.
+image::figs/html-argument-shows-up-in-test-report.jpg[scaledwidth="80%", width=475]
+
+Ceci est obtenu en créant une méthode fictive @Step appelée description prenant un paramètre chaîne de caractères. À l'exécution, les tests fournissent à cette méthode du texte au format html en paramètre.
+
+------------------
+...
+@Step
+public void description(String html) {
+    //ne fait rien
+}
+
+public void about(String description, String...remarks) {
+    String html =
+    "<h2 style=\"font-style:italic;color:black\">" + description + "</h2>" +
+    "<div><p>Remarks:</p>" +
+    "<ul style=\"margin-left:5%; font-weight:200; color:#434343; font-size:10px;\">";
+
+    for (String li : remarks) html += "<li>" + li + "</li>";
+
+    html += "<ul></div>";
+
+    description(html);
+}
+...
+------------------
 
 [[further-reading]]
    
