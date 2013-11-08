@@ -1,6 +1,6 @@
 = The Thucydides Reference Manual
 John Ferguson Smart
-v0.9.220, November 2013
+v0.9.223, November 2013
 
 :author: John Ferguson Smart
 :data-uri:
@@ -98,13 +98,21 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	* *webdriver.base.url*: The default starting URL for the application, and base URL for relative paths.
 
+  * *webdriver.remote.url*: The URL to be used for remote drivers (including a selenium grid hub)
+
+  * *phantomjs.webdriver.port* What port to run PhantomJS on (used in conjunction with webdriver.remote.url to register with a Selenium hub, e.g. -Dphantomjs.webdriver=5555 -Dwebdriver.remote.url=http://localhost:4444
+
+  * *webdriver.remote.driver*: The driver to be used for remote drivers
+
 	* *webdriver.timeouts.implicitlywait*: How long webdriver waits for elements to appear by default, in milliseconds.        
 
+  * *thucydides.home*: The home directory for Thucydides output and data files - by default, $USER_HOME/.thucydides
 	* *thucydides.outputDirectory*: Where should reports be generated.
 
 	* *thucydides.only.save.failing.screenshots* : Should Thucydides only store screenshots for failing steps? This can save disk space and speed up the tests a little. It is very useful for data-driven testing. This property is now deprecated. Use +thucydides.take.screenshots+ instead.
 
-  * *thucydides.verbose.screenshots* : Set this to +true+ for saving screenshots at every web element action (like click(), typeAndEnter(), type(), typeAndTab() etc.). This property is now deprecated. Use +thucydides.take.screenshots+ instead.
+  * *thucydides.verbose.screenshots* : Should Thucydides take screenshots for every clicked button and every selected link? By default, a screenshot will be stored at the start and end of each step. If this option is set to true, Thucydides will record screenshots for any action performed on a WebElementFacade, i.e. any time you use an expression like element(...).click(), findBy(...).click() and so on. This will be overridden if the ONLY_SAVE_FAILING_SCREENSHOTS option is set to true.
+  @Deprecated This property is still supported, but thucydides.take.screenshots provides more fine-grained control.
 
   * *thucydides.take.screenshots* : Set this property to have more finer control on how screenshots are taken. This property can take the folowing values:
     ** *FOR_EACH_ACTION* : Similar to +thucydides.verbose.screenshots+
@@ -114,6 +122,10 @@ You typically run Thucydides as part of the build process (either locally or on 
 
 	
   * *thucydides.verbose.steps* : Set this property to provide more detailed logging of WebElementFacade steps when tests are run.
+
+  * *thucydides.report.show.manual.tests*: Show statistics for manual tests in the test reports.
+
+  * *thucydides.report.show.releases*: Report on releases.
 
   * *thucydides.restart.browser.frequency*: During data-driven tests, some browsers (Firefox in particular) may slow down over time due to memory leaks. To get around this, you can get Thucydides to start a new browser session at regular intervals when it executes data-driven tests.
 
@@ -147,13 +159,24 @@ You typically run Thucydides as part of the build process (either locally or on 
 
   * *thucydides.locator.factory* :   Set this property to override the default locator factory with another locator factory (for ex., AjaxElementLocatorFactory or DefaultElementLocatorFactory). By default, Thucydides uses a custom locator factory called DisplayedElementLocatorFactory.
 
-  * *thucydides.driver.capabilities* : Use this property to pass a semi-colon separated list of capabilities to the web driver.
+  * *thucydides.driver.capabilities* : A set of user-defined capabilities to be used to configure the WebDriver driver. Capabilities should be passed in as a semi-colon-separated list of key:value pairs, e.g. "build:build-1234; max-duration:300; single-window:true; tags:[tag1,tag2,tag3]"
 
   * *thucydides.native.events* : Activate and deactivate native events for Firefox by setting this property to +true+ or +false+.
 
   * *security.enable_java* : Set this to true to enable Java support in Firefox. By default, this is set to false as it slows down the web driver.
 
   * *thucydides.test.requirements.basedir* : The base folder of the sub-module where the jBehave stories are kept. It is assumed that this directory contains sub folders src/test/resources. If this property is set, the requirements are read from src/test/resources under this folder instead of the classpath or working directory. This property is used to support situations where your working directory is different from the requirements base dir (for example when building a multi-module project from parent pom with requirements stored inside a sub-module)
+
+  * *thucydides.proxy.http*: HTTP Proxy URL configuration for Firefox and PhantomJS
+
+  * *thucydides.proxy.http_port*: HTTP Proxy port configuration for Firefox and PhantomJS
+  * *thucydides.proxy.type*: HTTP Proxy type configuration for Firefox and PhantomJS
+
+  * *thucydides.proxy.user*: HTTP Proxy username configuration for Firefox and PhantomJS
+
+  * *thucydides.proxy.password*: HTTP Proxy password configuration for Firefox and PhantomJS
+
+  * *chrome.switches*: Arguments to be passed to the Chrome driver, separated by commas.
                                  
 An example of using these parameters is shown here:
 
@@ -1604,6 +1627,6 @@ public void about(String description, String...remarks) {
 - JavaWorld. http://www.javaworld.com/javaworld/jw-10-2011/111018-thucydides-for-atdd.html[Selenium 2 and Thucydides for ATDD], August. 2011.
 
 .Books
-- Bdd in Action, http://manning.com/smart[BDD In Action - Manning - Summer, 2014]
+- Bdd in Action, http://manning.com/smart[BDD In Action - Manning - Summer, 2014      ]
 
 
