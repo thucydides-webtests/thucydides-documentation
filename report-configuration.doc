@@ -1,0 +1,100 @@
+
+To generate the full Thucydides reports, run mvn thucydides:aggregate. For this to work, you need to add the right plugins group to your settings.xml file, as shown here:
+
+
+--------------------
+<settings>
+ <pluginGroups>
+   <pluginGroup>net.thucydides.maven.plugins</pluginGroup>
+   ...
+ </pluginGroups>
+ ...
+</settings>
+--------------------
+
+You can run this in the same command as your tests by setting the maven.test.failure.ignore property to true: if you don't do this, Maven will stop if any errors occur and not proceed to the report generation:
+
+
+--------------------
+$ mvn clean verify thucydides:aggregate -Dmaven.test.failure.ignore=true
+--------------------
+
+You can also integrate the Thucydides reports into the standard Maven reports. If you are using Maven 2, just add the Thucydides Maven plugin to the reporting section:
+
+
+--------------------
+<reporting>
+    <plugins>  
+        ...
+        <plugin>
+            <groupId>net.thucydides.maven.plugins</groupId>
+            <artifactId>maven-thucydides-plugin</artifactId>
+            <version>${thucydides.version}</version>
+        </plugin>
+    </plugins>
+</reporting>
+--------------------
+
+If you are using Maven 3, you need to add the Maven Thucydides report to the maven-site-plugin configuration as shown here:
+
+
+--------------------
+<build>
+    <plugins> 
+        ...
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <version>3.0-beta-3</version>
+            <configuration>
+                <reportPlugins>   
+                    ...
+                    <plugin>
+                        <groupId>net.thucydides.maven.plugins</groupId>
+                        <artifactId>maven-thucydides-plugin</artifactId>
+                        <version>${thucydides.version}</version>
+                    </plugin>
+                </reportPlugins>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+--------------------
+
+To generate this report, run the mvn site command after running mvn verify, e.g.
+
+--------------------
+$ mvn clean verify site
+--------------------
+
+This will produce a summary report in the generated Maven site documentation, with links to the more detailed Thucydides reports:
+
+[[fig-maven-report]]
+.Thucydides test reports in the Maven site
+image::figs/thucydides-maven-reports.png[scaledwidth="80%", width=475]
+
+== Converting existing xUnit, specFlow and Lettuce test cases into Thucydides report
+
+With the Thucydides maven plugin added as described in the previous section, you can also import existing xUnit, http://www.specflow.org/[specflow] and http://lettuce.it/index.html[Lettuce] test cases into a Thucydides report. For this, add the +source+ directory of test cases and +format+ (xunit, specflow or lettuce) parameters to the plugin configuration. 
+
+--------------------
+<reporting>
+    <plugins>
+        ...
+        <plugin>
+            <groupId>net.thucydides.maven.plugins</groupId>
+            <artifactId>maven-thucydides-plugin</artifactId>
+            <version>${thucydides.version}</version>
+            <configuration>
+              <source>src</source>
+              <format>xunit</format>
+            </configuration>
+        </plugin>
+    </plugins>
+</reporting>
+--------------------
+
+There are also a number of ways you can fine-tune the reports. You can fine-tune the tag categories that appear in the 'Related Tags' section by using the +dashboard.tag.list+ or +dashboard.excluded.tag.list+. The +thucydides.report.show.manual.tests+ property lets you show or hide manual test results. And you can initially hide the pie chart by setting +show.pie.charts+ to false (users can still display it themselves). 
+
+
+

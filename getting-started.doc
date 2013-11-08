@@ -1,0 +1,249 @@
+=== Creating a new Thucydides project
+
+The easiest way to start a new Thucydides project is to use the Maven archetype. Three archetypes are currently available: one for using Thucydides with JUnit, another if you also want to write your acceptance tests (or a part of them) using http://www.easyb.org/[easyb], and finally one more to help you write acceptance tests in jBehave. In this section, we will create a new Thucydides project using the Thucydides archetype, and go through the essential features of this project.
+
+From the command line, you can run *mvn archetype:generate* and then select the *net.thucydides.thucydides-easyb-archetype* archetype from the proposed list of archetypes. Or you can use your favorite IDE to generate a new Maven project using an archetype.
+                           
+--------------------------
+$ mvn archetype:generate
+...
+Define value for property 'groupId': : com.mycompany
+Define value for property 'artifactId': : webtests
+Define value for property 'version':  1.0-SNAPSHOT: :
+Define value for property 'package':  com.mycompany: :
+Confirm properties configuration:
+groupId: com.mycompany
+artifactId: webtests
+version: 1.0-SNAPSHOT
+package: com.mycompany
+ Y: :
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 2:33.290s
+[INFO] Finished at: Fri Oct 28 07:20:41 NZDT 2011
+[INFO] Final Memory: 7M/81M
+[INFO] ------------------------------------------------------------------------
+--------------------------
+
+This will create a simple Thucydides project, complete with a Page Object, a Step library and two test cases, one using JUnit, and one using easyb. The actual tests run against the online dictionary at Wiktionary.org. Before going any further, take the project for a spin. First, however, you will need to add the +net.thucydides.maven.plugins+ to your plugin groups in your +settings.xml+ file:
+
+
+---------------------------
+<settings>
+   <pluginGroups>
+       <pluginGroup>net.thucydides.maven.plugins</pluginGroup>
+       ...
+      </pluginGroups>
+  ...
+</settings>
+---------------------------
+
+This will let you invoke the Maven *thucydides* plugin from the command line in the short-hand form shown here. Now go into the generated project directory, run the tests and generate the reports:
+
+---------------------------
+$ mvn test thucydides:aggregate
+---------------------------
+
+This should run some web tests and generate a report in +target/site/thucydides+ directory (open the +index.html+ file).
+
+If you drill down into the individual test reports, you will see an illustrated narrative for each test similar to the one shown in <<fig-test-report>>
+
+Now for the details. the project directory structure is shown here:
+
+--------------------------
++ src
+   + main
+      + java
+         + com.mycompany.pages
+            - HomePage.java   
+
+   + test
+      + java
+         + com.mycompany.pages
+            + requirements
+               - Application.java
+            + steps
+               - EndUserSteps.java
+            - LookupADefinitionStoryTest.java 
+
+      + stories
+         + com.mycompany
+            - LookupADefinition.story
+--------------------------
+
+This project is designed to provide a starting point for your Thucydides acceptance tests, and to illustrate some of the basic features. The tests come in two flavors: 'easyb' and 'JUnit'. easyb is a Groovy-based BDD (Behaviour Driven Development) library which works well for this kind of test. The sample easyb story can be found in the +LookupADefinition.story+ file, and looks something like this:
+
+
+--------------------------
+using "thucydides"
+
+thucydides.uses_default_base_url "http://en.wiktionary.org/wiki/Wiktionary:Main_Page"
+thucydides.uses_steps_from EndUserSteps
+thucydides.tests_story SearchByKeyword
+
+scenario "Looking up the definition of 'apple'", {
+    given "the user is on the Wikionary home page", {
+        end_user.is_the_home_page()
+    }
+    when "the end user looks up the definition of the word 'apple'", {
+        end_user.looks_for "apple"
+    }
+    then "they should see the definition of 'apple", {
+       end_user.should_see_definition_containing_words "A common, round fruit"
+    }
+}
+--------------------------
+
+A cursory glance at this story will show that it relates a user looking up the definition of the word 'apple'. However only the “what” is expressed at this level – the details are hidden inside the test steps and, further down, inside page objects.
+
+If you prefer pure Java tests, the JUnit equivalent can be found in the +LookupADefinitionStoryTest.java+ file:
+
+
+--------------------------
+@Story(Application.Search.SearchByKeyword.class)
+@RunWith(ThucydidesRunner.class)
+public class LookupADefinitionStoryTest {
+
+    @Managed(uniqueSession = true)
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+    public Pages pages;
+
+    @Steps
+    public EndUserSteps endUser;
+
+    @Issue("#WIKI-1")
+    @Test
+    public void looking_up_the_definition_of_apple_should_display_the_corresponding_article() {
+        endUser.is_the_home_page();
+		endUser.looks_for("apple");
+        endUser.should_see_definition_containing_words("A common, round fruit");
+
+    }
+}
+--------------------------
+
+As you can see, this is a little more technical but still very high level.
+
+The step libraries contain the implementation of each of the steps used in the high-level tests. For complex tests, these steps can in turn call other steps. The step library used in this example can be found in +EndUserSteps.java+:
+
+
+--------------------------
+public class EndUserSteps extends ScenarioSteps {
+
+	public EndUserSteps(Pages pages) {
+		super(pages);
+	}
+
+    @Step
+    public void searches_by_keyword(String keyword) {
+        enters(keyword);
+        performs_search();
+    }
+
+	@Step
+	public void enters(String keyword) {
+        onHomePage().enter_keywords(keyword);
+	}
+
+    @Step
+    public void performs_search() {
+        onHomePage().starts_search();
+    }
+
+    private HomePage onHomePage() {
+        return getPages().currentPageAt(HomePage.class);
+    }
+
+    @Step
+	public void should_see_article_with_title(String title) {
+        assertThat(onHomePage().getTitle(), is(title));
+	}
+
+    @Step
+    public void is_on_the_wikipedia_home_page() {
+        onHomePage().open();
+    }
+}   
+--------------------------
+
+Page Objects are a way of encapsulating the implementation details about a particular page. Selenium 2 has particularly good support for page objects, and Thucydides leverages this. The sample page object can be found in the HomePage.java class:
+
+
+--------------------------
+@DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
+public class SearchPage extends PageObject {
+
+    @FindBy(name="search")
+	private WebElement searchInput;
+	
+	@FindBy(name="go")
+	private WebElement searchButton;
+	
+	public SearchPage(WebDriver driver) {
+		super(driver);
+	}
+
+	public void enter_keywords(String keyword) {
+		searchInput.sendKeys(keyword);
+	}
+
+    public void starts_search() {
+        searchButton.click();
+    }
+
+    public List<String> getDefinitions() {
+        WebElement definitionList = getDriver().findElement(By.tagName("ol"));
+        List<WebElement> results = definitionList.findElements(By.tagName("li"));
+        return convert(results, new ExtractDefinition());
+    }
+
+    class ExtractDefinition implements Converter<WebElement, String> {
+        public String convert(WebElement from) {
+            return from.getText();
+        }
+    }
+}
+--------------------------
+
+The final piece in the puzzle is the +Application.java+ class, which is a way of representing the structure of your requirements in Java form, so that your easyb and JUnit tests can be mapped back to the requirements they are testing:
+
+
+--------------------------
+	public class Application {
+	    @Feature
+	    public class Search {
+	        public class SearchByKeyword {}
+	        public class SearchByAnimalRelatedKeyword {}
+	        public class SearchByFoodRelatedKeyword {}
+	        public class SearchByMultipleKeywords {}
+	        public class SearchForQuote{}
+	    }
+
+	    @Feature
+	    public class Backend {
+	        public class ProcessSales {}
+	        public class ProcessSubscriptions {}
+	    }
+
+	    @Feature
+	    public class Contribute {
+	        public class AddNewArticle {}
+	        public class EditExistingArticle {}
+	    }
+	}
+--------------------------
+
+This is what enables Thucydides to generate the aggregate reports about features and stories.
+
+In the following sections, we will look at different aspects of writing automated tests with Thucydides in more detail.
+
+=== Setting custom web driver capabilities
+You can set custom web driver capabilities by passing a semi-colon separated list of capabilities in the property +thucydides.driver.capabilities+. For example,
+
+--------------------------
+"build:build-1234; max-duration:300; single-window:true; tags:[tag1,tag2,tag3]"
+--------------------------
+ 

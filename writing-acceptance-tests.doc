@@ -1,0 +1,56 @@
+In this section, we look at the things you need to know to write your acceptance or regression tests using Thucydides in more detail. We will also outline a general approach to writing your web-based acceptance tests that has worked well for us in the past.
+
+. Define and organize the requirements or user stories you need to test
+. Write high level pending tests for the acceptance criteria  
+. Choose a test to implement, and break it into a small (typically between 3 and 7) high-level steps
+. Implement these steps, either by breaking them down into other steps, or by accessing Page Objects. 
+. Implement any new Page Object methods that you have discovered.
+           
+[NOTE]
+=====================================================================
+These steps should not been seen as a linear or waterfall-style approach. Indeed, the process is usually quite incremental, with requirements being added to the +Application+ class as they are required, and pending tests being used to defined tests before they are fleshed out. 
+=====================================================================
+
+=== Organizing your requirements 
+ 
+To get the most out of automated tests in Thucydides, you need to tell Thucydides which features of your application you are testing in each test. While this step is optional, it is highly recommended.
+
+The current version of Thucydides uses a simple, three-level organization to structure acceptance tests into more manageable chunks. At the highest level, an application is broken into 'features', which is a high-level functionality or group of related functions. A feature contains a number of 'stories' (corresponding to user stories, use cases, and so on). Each story is validated by a number of examples, or acceptance criteria, which are automated in the form of web tests (sometimes called scenarios). Each test, in turn, is implemented using a number of steps.
+
+Of course this structure and these terms are merely a convenience to allow a higher-level vision of your acceptance tests. However, this sort of three-level abstraction seems to be fairly common.
+
+In the current version of Thucydides, you define this structure within the test code, as (very light-weight) Java classes footnote:[Future versions of Thucydides will support other ways of defining your user requirements.]. This makes it easier to refactor and rename user stories and features within the tests, and gives a central point of reference in the test suite illustrating what features are being tested. A simple example is shown here. The Application class is simply a convenient way of placing the features and user stories in the one file. Features are marked with the @Feature annotation. User stories are declared as inner classes nested inside a @Feature class.
+
+
+--------------------------
+public class Application {
+
+    @Feature
+    public class ManageCompanies {
+        public class AddNewCompany {}
+        public class DeleteCompany {}
+        public class ListCompanies {}
+    }
+
+    @Feature
+    public class ManageCategories {
+        public class AddNewCategory {}
+        public class ListCategories {}
+        public class DeleteCategory {}
+    }
+
+    @Feature
+    public class ManageTags {
+        public class DisplayTagCloud {}
+    }
+
+    @Feature
+    public class ManageJobs {}
+
+    @Feature
+    public class BrowseJobs {
+        public class UserLookForJobs {}
+        public class UserBrowsesJobTabs {}
+    }
+} 
+--------------------------

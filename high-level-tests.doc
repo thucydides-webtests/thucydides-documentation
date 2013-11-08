@@ -1,0 +1,615 @@
+There are two approaches to automated acceptance criteria or regression tests with Thucydides. Both involve implementing the tests as a sequence of very high-level steps, and then fleshing out those steps by drilling down into the details, until you get to the Page Objects. The difference involves the language used to implement the high-level tests. Tools like easyb are more focused on communication with non-developers, and allow high level tests to be expressed more easily in business terms. On the other hand, developers often find it more comfortable to work directly with JUnit, so if communication with non-technical stakeholders is not a high priority, this might be a preferred option.
+
+In the current version of Thucydides, you can write your tests using easyb (for a more BDD-style approach) or in JUnit using Java or another JVM language (Groovy is a popular choice). Other BDD tools will be supported in future versions. We will discuss both here, but you can use whatever you and your team are more comfortable with.
+
+=== Defining high-level tests in easyb  
+
+Easyb (http://easyb.org) is a Groovy-based BDD tool. It makes it easy to write light-weight stories and scenarios using the classic BDD-style "given-when-then" structure, and then to implement them in Groovy. The Thucydides easyb plugin is designed to make it easy to write Thucydides tests using easyb.      
+                     
+==== Writing a pending easyb story
+
+In easyb, you write tests (referred to as "scenarios") that, when using Thucydides, correspond to automated acceptance criteria. Tests are grouped into "stories" - each story has it's own file.
+
+Scenarios are first written as "pending". These are just high-level outlines, describing a set of acceptance criteria for a particular story in a "given-when-then" structure.  
+
+When the tests are executed, pending scenarios are skipped. However they appear in the reports, so that you know what features still need to be implemented. An example of how pending scenarios appear in a Thucydides report can be seen in <<fig-story-results-pending>>.
+
+[[fig-story-results-pending]]
+.Pending tests are shown with the 'calendar' icon
+image::figs/story-results-pending.png[scaledwidth="80%", width=475]
+
+Here is an example of a pending easyb story using Thucydides:
+  
+
+----------------------
+using "thucydides"
+
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+
+thucydides.tests_story AddNewCategory
+
+scenario "The administrator adds a new category to the system",
+{
+        given "a new category needs to be added to the system"
+        when "the administrator adds a new category"
+        then "the system should confirm that the category has been created"
+        and "the new category should be visible to job seekers"
+}
+
+scenario "The administrator adds a category with an existing code to the system",
+{
+        given "the administrator is on the categories list page"
+        when "the user adds a new category with an existing code"
+        then "an error message should be displayed"
+}  
+----------------------
+
+Let's examine this story piece-by-piece. First, you need to declare that you are using Thucydides. You do this by using the easyb using keyword:
+
+
+----------------------
+using "thucydides"
+----------------------
+
+This will, among other things, inject the +thucydides+ object into your story context so that you can configure Thucydides to run your story correctly.
+
+Next, you need to tell Thucydides what story you are testing. You do this by referencing one of the story classes you defined earlier. That's what we are doing here:
+
+
+----------------------
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+
+thucydides.tests_story AddNewCategory
+----------------------
+
+The rest of the easyb story is just a set of regular easyb pending scenarios. For the moment, there is no implementation, so they will appear as "pending" in the reports:
+
+
+----------------------
+scenario "The administrator adds a new category to the system",
+{
+        given "a new category needs to be added to the system"
+        when "the administrator adds a new category"
+        then "the system should confirm that the category has been created"
+        and "the new category should be visible to job seekers"
+}
+
+scenario "The administrator adds a category with an existing code to the system",
+{
+        given "the administrator is on the categories list page"
+        when "the user adds a new category with an existing code"
+        then "an error message should be displayed"
+}
+----------------------
+
+You typically declare many pending stories, preferably in collaboration with the product owner or BAs, at the start of an iteration. This lets you get a good picture of what stories need to be implemented in a given iteration, and also an idea of the relative complexity of each story.
+
+==== Implementing the easyb stories 
+ 
+The next step is to implement your stories. Let's look at an implemented version of the first of these scenarios:
+
+
+----------------------
+using "thucydides"
+
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+import net.thucydides.demos.jobboard.steps.AdministratorSteps
+import net.thucydides.demos.jobboard.steps.JobSeekerSteps
+
+thucydides.uses_default_base_url "http://localhost:9000" 
+thucydides.uses_steps_from AdministratorSteps
+thucydides.uses_steps_from JobSeekerSteps
+thucydides.tests_story AddNewCategory
+
+def cleanup_database() {
+    administrator.deletes_category("Scala Developers");
+}
+
+scenario "The administrator adds a new category to the system",
+{
+    given "a new category needs to be added to the system", 
+    {
+      administrator.logs_in_to_admin_page_if_first_time()
+      administrator.opens_categories_list()
+    }
+    when "the administrator adds a new category", 
+    {
+       administrator.selects_add_category()
+       administrator.adds_new_category("Scala Developers","SCALA")
+    }
+    then "the system should confirm that the category has been created", 
+    {
+        administrator.should_see_confirmation_message "The Category has been created"
+    }
+    and "the new category should be visible to job seekers", 
+    {
+        job_seeker.opens_jobs_page()
+        job_seeker.should_see_job_category "Scala Developers" 
+    }
+}
+----------------------
+
+Again, let's break this down. In the first section, we import the classes we need to use:
+
+
+----------------------
+using "thucydides"
+
+import net.thucydides.demos.jobboard.requirements.Application.ManageCategories.AddNewCategory
+import net.thucydides.demos.jobboard.steps.AdministratorSteps
+import net.thucydides.demos.jobboard.steps.JobSeekerSteps
+----------------------
+
+Next, we declare the default base URL to be used for the tests. Like the equivalent annotation in the JUnit tests, this is used for tests executed from within the IDE, or if no base URL is defined on the command line using the +webdriver.base.url+ parameter.
+
+
+---------------------
+thucydides.uses_default_base_url "http://localhost:9000"
+---------------------
+
+We also need to declare the test step libraries we will be using. We do this using thucydides.uses_steps_from. This will inject an instance variable into the easyb context for each declared step library. If the step library class name ends in 'Steps' (e.g. JobSeekerSteps), the name of the variable will be the class name less the 'Steps' suffix, converted to lower case and underscores (e.g. "job_seeker"). We will learn more about implementing test step libraries further on. 
+
+
+---------------------
+thucydides.uses_steps_from AdministratorSteps
+thucydides.uses_steps_from JobSeekerSteps
+thucydides.tests_story AddNewCategory
+---------------------
+
+Finally we implement the scenario. Notice, that since this is Groovy, we can declare fixture methods to help set up and tear down the test environment as required:
+
+
+---------------------
+def cleanup_database() {
+    administrator.deletes_category("Scala Developers");
+}
+---------------------
+
+The implementation usually just invokes step methods, as illustrated here:
+
+
+---------------------
+scenario "The administrator adds a new category to the system",
+{
+    given "a new category needs to be added to the system",
+    {
+      administrator.logs_in_to_admin_page_if_first_time()
+      administrator.opens_categories_list()
+    }
+    when "the administrator adds a new category",
+    {
+       administrator.selects_add_category()
+       administrator.adds_new_category("Scala Developers","SCALA")
+    }
+    then "the system should confirm that the category has been created",
+    {
+        administrator.should_see_confirmation_message "The Category has been created"
+    }
+    and "the new category should be visible to job seekers",
+    {
+        job_seeker.opens_jobs_page()
+        job_seeker.should_see_job_category "Scala Developers"
+        cleanup_database()
+    }
+}   
+---------------------
+
+=== Defining high-level tests in JUnit
+ 
+Thucydides integrates smoothly with ordinary JUnit 4 tests, using the ThucydidesRunner test runner and a few other specialized annotations. This is one of the easiest ways to start out with Thucydides, and is very well suited for regression testing, where communication and clarification with the various stakeholders is less of a requirement. 
+
+Here is an example of a Thucydides JUnit web test:
+
+
+-------------------
+@RunWith(ThucydidesRunner.class)
+@Story(UserLookForJobs.class)
+public class LookForJobsStory {
+
+    @Managed
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://localhost:9000")
+    public Pages pages;
+
+    @Steps
+    public JobSeekerSteps job_seeker;
+
+    @Test
+    public void user_looks_for_jobs_by_key_word() {
+        job_seeker.opens_jobs_page();
+        job_seeker.searches_for_jobs_using("Java");
+        job_seeker.should_see_message("No jobs found.");
+    }
+
+    @Test
+    public void when_no_matching_job_found_should_display_error_message() {
+        job_seeker.opens_jobs_page();
+        job_seeker.searches_for_jobs_using("unknownJobCriteria");
+        job_seeker.should_see_message("No jobs found.");
+    }
+
+    @Pending @Test
+    public void tags_should_be_displayed_to_help_the_user_find_jobs() {}
+
+    @Pending @Test
+    public void the_user_can_list_all_of_the_jobs_for_a_given_tag() {}
+
+    @Pending @Test
+    public void the_user_can_see_the_total_number_of_jobs_on_offer() {}
+
+}
+-------------------
+
+Let's examine this section-by-section. The class starts with the @RunWith annotation, to indicate that this is a Thucydides test. We also use the @Story annotation to indicate which user story (defined as nested classes of the the @Feature classes above) is being tested. This is used to generate the aggregate reports.
+
+
+-------------------
+@RunWith(ThucydidesRunner.class)
+@Story(UserLookForJobs.class)
+public class LookForJobsStory {
+    ...
+-------------------
+
+Next, come two essential annotations for any web tests. First of all, your test case needs a public +Webdriver+ field, annotated with the +@Managed+ annotation. This enables Thucydides to take care of opening and closing a WebDriver driver for you, and lets Thucydides use this driver in the pages and test steps when the tests are executed:
+
+
+-------------------
+    @Managed
+    public WebDriver webdriver;    
+-------------------
+
+The second essential field is an instance of the +Pages+ class, annotated with the +@ManagedPages+ annotation. This is essentially a page factory, that Thucydides uses to provide you with instantiated page objects. The +defaultUrl+ attribute lets you define a URL to use when your pages open, if no other base URL has been defined. This is useful for IDE testing:
+
+
+-------------------
+    @ManagedPages(defaultUrl = "http://localhost:9000")
+    public Pages pages;
+-------------------
+  
+Note that these two annotations are only required for web tests. If your Thucydides test does not use web tests, you can safely leave them out.
+
+For high-level acceptance or regression tests, it is a good habit to define the high-level test as a sequence of high-level steps. It will make your tests more readable and easier to maintain if you delegate the implementation details of your test (the "how") to reusable "step" methods. We will discuss how to define these step methods later. However, the minimum you need to do is to define the class where the steps will be defined, using the +@Steps+ annotation. This annotation tells Thucydides to listen to method calls on this object, and (for web tests) to inject the WebDriver instance and the page factory into the Steps class so that they can be used in the step methods.  
+
+
+-------------------
+    @Steps
+    public JobSeekerSteps job_seeker;
+-------------------
+
+==== Pending tests
+
+Tests that contain no steps are considered to be pending. Alternatively, you can force a step to be skipped (and marked as pending) by using the +@Pending+ annotation or the +@Ignore+ annotation. Note that the semantics are slightly different: +@Ignore+ indicates that you are temporarily suspending execution of a test, whereas +@Pending+ means that the test has been specified but not yet implemented. So both these tests will be pending:
+
+
+-------------------
+@Test
+public void administrator_adds_an_existing_company_to_the_system() {}
+
+@Pending @Test
+public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
+    steps.login_to_admin_page();
+    steps.open_companies_list();
+    steps.select_add_company();
+    // More to come        
+}
+-------------------
+
+A test is also considered pending if any of the steps used in that test are pending. For a step to be pending, it needs to be annotated with the +@Pending+ annotation.
+
+===== Junit assumptions
+
+You can use junit http://junit.sourceforge.net/javadoc/org/junit/Assume.html[assumptions] in your tests or step methods to . Steps where the conditions under assumptions fail are marked as PENDING instead of ERROR. Subsequent steps are also marked as PENDING.
+
+-------------------
+@Test
+public void administrator_adds_an_existing_company_to_the_system() {}
+
+@Test
+public void administrator_adds_a_company_with_an_existing_code_to_the_system() {
+    steps.login_to_admin_page();
+    steps.open_companies_list();
+    steps.select_add_company();
+    // More to come        
+}
+-------------------
+
+-------------------
+...
+@Step
+public void open_companies_list() {
+  Assume.assumeThat(user.role, is("admin"));
+  CompaniesListPage page = pages().get(CompanyListPage.class); 
+  String companieslist = page.getCompaniesList();
+
+}
+...
+-------------------
+
+In the above example, if the assumption in step +open_companies_list+ fails, it and all susbequent steps will be marked PENDING.
+
+
+==== Running tests in a single browser session 
+
+Normally, Thucydides opens a new browser session for each test. This helps ensure that each test is isolated and independent. However, sometimes it is useful to be able to run tests in a single browser session, in particular for performance reasons on read-only screens. You can do this by using the 'uniqueSession' attribute in the @Managed annotation, as shown below. In this case, the browser will open at the start of the test case, and not close until all of the tests have been executed.
+ 
+
+----------------
+@RunWith(ThucydidesRunner.class)
+public class OpenStaticDemoPageSample {
+
+    @Managed(uniqueSession=true)
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "classpath:static-site/index.html")
+    public Pages pages;
+
+    @Steps
+    public DemoSiteSteps steps;
+
+    @Test
+    @Title("The user opens the index page")
+    public void the_user_opens_the_page() {
+        steps.should_display("A visible title");
+    }    
+
+    @Test
+    @Title("The user selects a value")
+    public void the_user_selects_a_value() {
+        steps.enter_values("Label 2", true);
+        steps.should_have_selected_value("2");
+    }
+
+    @Test
+    @Title("The user enters different values.")
+    public void the_user_opens_another_page() {
+        steps.enter_values("Label 3", true);
+        steps.do_something();
+        steps.should_have_selected_value("3");
+    }
+}
+----------------
+
+If you do not need WebDriver support in your test, you can skip the +@Managed+ and +@Pages+ annotations, e.g. 
+
+
+----------------
+@RunWith(ThucydidesRunner.class)
+@Story(Application.Backend.ProcessSales.class)
+public class WorkWithBackendTest {
+
+    @Steps
+    public BackendSteps backend;
+
+    @Test
+    public void when_processing_a_sale_transation() {
+        backend.accepts_a_sale_transaction();
+        backend.should_the_update_mainframe();
+    }
+}
+----------------             
+
+=== Adding tags to test cases
+
+You can add arbitrary tags to your tests both in junit and easyb. Tags provide context to tests. A tag has two parts - a +type+ and a +name+. Thucydides reports categorize tests based on the specified tag types. 
+
+Tag types are arbitrary and you can add as many types as you wish. By default, a +story+ tag type is automatically added to each test. An example of tags on Thucydides reports is given in <<fig-tags-in-reports>>
+
+[[fig-tags-in-report]]
+.Tag types appear on top. Each tag type displays the tag names.
+image::figs/tags-in-reports.png[scaledwidth="80%", width=800]
+
+==== Adding tags to junit tests
+
+Tags are added to junit tests using +@WithTag+ annotation. The following will add a tag of type +epic+ with name "Audit".
+
+[source,java]
+----------------
+@WithTag(type="epic", name="Audit")
+----------------
+
+If no type is defined, the default tag type is assumed to be +feature+. In other words, the following two tags are equivalent.
+
+[source,java]
+----------------
+@WithTag(type="feature", name="Definition-lookup")
+----------------
+
+[source,java]
+----------------
+@WithTag(name="Definition-lookup")
+----------------
+
++@WithTag+ has an alternative, more concise syntax using a colon (:) to separate the tag type and name. For example,
+
+[source,java]
+----------------
+@WithTag("epic:Audit")
+----------------
+
+or,
+
+[source,java]
+----------------
+@WithTag("feature:Definition-lookup")
+----------------
+
+Multiple tags can be added using +@WithTags+ annotation or it's shorter cousin - +@WithTagValuesOf+. For example,
+
+[source,java]
+----------------
+@WithTags (
+        {
+                @WithTag(name="lookups", type="feature"),
+                @WithTag(name="release-2", type="release")
+
+        }
+)
+----------------
+
+Using +@WithTagValuesOf+, the above can be written more succinctly as: 
+
+[source,java]
+----------------
+@WithTagValuesOf({"lookups", "release:release-2"})
+----------------
+
+==== Adding tags to easyb tests
+
+Tags can be easily added to easyb stories in the form of +thucydides.tests.<type>+ to the stories. For example,
+
+[source,java]
+----------------
+thucydides.tests.feature "history reports"
+thucydides.tests.epic "reporting"
+thucydides.tests.epic "audit"
+thucydides.tests.priority "high"
+----------------
+
+
+==== Filter tests by tags in jUnit
+
+You can filter tests by tag while running Thucydides. This can be achieved by providing a single tag or a comma separated list of tags from command line. If provided, only classes and/or methods with tags in this list will be executed.
+
+Example:
+
+----------------
+mvn verify -Dtags="iteration:I1"
+----------------
+
+or
+
+----------------
+mvn verify -Dtags="color:red,flavor:strawberry"
+----------------
+
+
+
+=== Running Thucydides in different browsers
+
+Thucydides supports all browser-based WebDriver drivers, i.e. Firefox, Internet Explorer and Chrome, as well as HTMLUnit. By default, it will use Firefox. However, you can override this option using the +webdriver.driver+ system property. To set this from the command line, you could do the following:
+
+-------------------
+$ mvn test -Dwebdriver.driver=iexplorer
+-------------------
+
+If you are not using Firefox by default, it is also useful to define this variable as a property in your Maven pom.xml file, e.g.
+
+
+-------------------
+<properties>
+    <webdriver.driver>iexplorer</webdriver.driver>
+</properties> 
+-------------------
+
+For this to work with JUnit, however, you need to pass the webdriver.driver property to JUnit. JUnit runs in a separate JVM, and will not see the system properties defined in the Maven build. To get around this, you need to pass them into JUnit explicitly using the systemPropertyVariables configuration option, e.g.
+
+
+-------------------
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.7.1</version>
+            <configuration>
+                <systemPropertyVariables>
+                    <webdriver.driver>${webdriver.driver}</webdriver.driver>
+                </systemPropertyVariables>
+            </configuration>
+        </plugin> 
+-------------------
+
+==== Chrome switches
+
+Thucydides supports +chrome.switches+ system property to define options for the Chrome driver. This lets you set useful chrome options such as +"--homepage=about:blank" or "--no-first-run"+. You can provide any number of options, separated by commas, e.g.:
+
+-------------------
+$mvn verify -Dchrome.switches="homepage=about:blank,--no-first-run"
+-------------------
+
+
+=== Forcing the use of a particular driver in a test case or test
+
+The +@Managed+ annotation also lets you specify what driver you want to use for a particular test case, via the +driver+ attribute. Current supported values are “firefox”, “iexplorer”, “chrome” and “htmlunit”. The +driver+ attribute lets you override the system-level default driver for specific requirements. For example, the following test case will run in Chrome, regardless of the +webdriver.driver+ system property value used:
+ 
+
+-----------------
+@RunWith(ThucydidesRunner.class)
+@Story(Application.Search.SearchByKeyword.class)
+public class SearchByFoodKeywordStoryTest {
+
+    @Managed(uniqueSession = true, driver="chrome")
+    public WebDriver webdriver;
+
+    @ManagedPages(defaultUrl = "http://www.google.co.nz")
+    public Pages pages;
+
+    @Steps
+    public EndUserSteps endUser;
+
+    @Test
+    public void searching_by_keyword_pears_should_display_the_corresponding_article() {
+        endUser.is_the_google_home_page();
+        endUser.enters("pears");
+        endUser.starts_search();
+        endUser.should_see_article_with_title_containing("Pear");
+    }
+
+    @Test
+    @WithDriver("firefox")
+    public void searching_by_keyword_pineapples_should_display_the_corresponding_article() {
+        endUser.is_the_google_home_page();
+        endUser.enters("pineapples");
+        endUser.starts_search();
+        endUser.should_see_article_with_title_containing("Pineapple");
+    }
+}         
+----------------------
+
+In *easyb*, you can use the +uses_driver+ directive, as shown here:
+
+
+----------------------
+using "thucydides"
+...
+thucydides.uses_default_base_url "http://localhost:9000" 
+thucydides.uses_driver chrome
+
+...
+
+scenario "The administrator adds a new category to the system",
+{
+    given "a new category needs to be added to the system", 
+    {
+      administrator.logs_in_to_admin_page_if_first_time()
+      administrator.opens_categories_list()
+    }
+    when "the administrator adds a new category", 
+    {
+       administrator.selects_add_category()
+       administrator.adds_new_category("Scala Developers","SCALA")
+    }
+    then "the system should confirm that the category has been created", 
+    {
+        administrator.should_see_confirmation_message "The Category has been created"
+    }
+    and "the new category should be visible to job seekers", 
+    {
+        job_seeker.opens_jobs_page()
+        job_seeker.should_see_job_category "Scala Developers" 
+    }
+}
+----------------------
+
+In JUnit, you can also use the +@WithDriver+ annotation to specify a driver for an individual test. This will override both the system-level driver and the +@Managed+ annotation’s driver attribute, if provided. For example, the following test will always run in Firefox:
+
+
+------------------
+    @Test
+    @WithDriver("firefox")
+    public void searching_by_keyword_pineapples_should_display_the_corresponding_article() {
+        endUser.is_the_google_home_page();
+        endUser.enters("pineapples");
+        endUser.starts_search();
+        endUser.should_see_article_with_title_containing("Pineapple");
+    }
+------------------

@@ -1,0 +1,87 @@
+Thucydides provides tight integration with JIRA, though an extensible plugin architecture. You can store requirements in JIRA, and associate the automated tests with this requirements, so that the requirements defined in JIRA appear in the Thuydides reports. If you are using the JIRA Zephyr plugin to manage manual tests, you can also read manual test results from Zephyr and include them in your Thucydides reports. 
+
+=== JIRA Integration plugins
+
+A number of Thucydides plugins for JIRA are available for different JIRA configurations. A Requirements plugin implements the +RequirementsTagProvider+ interface, and helps Thucydides retrieve a list of project requirements and associate these requirements with test results.
+
+There are several plugins available, that are used for different purposes. All of the JIRA plugins use the *@Issue* annotation (or equivalent) to associate executed tests with a requirement defined in JIRA. In addition to using them out-of-the-box, the source code for the JIRA Thucydides plugins can be used to write your own custom integration plugins for JIRA or other systems. 
+
+.Thucydides JIRA plugins
+thucydides-jira-plugin::
+	A client library for the JIRA RESTful interface. This library is used by the other plugins, and is not usually used directly unless you want to write your own JIRA integration plugin.
+thucydides-jira-requirements-provider:
+	Reads the requirements structure from the Epics and Stories in JIRA. It reads Epic cards as the top-level requirements and Story cards underneath the Epics. It also reads the versions defined in the JIRA project, using the *Fix Version* field to associated test results with particular versions. Many organizations customize their JIRA card structure, so this plugin is a good place to start if you have a more specific card organization.
+thucydides-jira-customfield-requirements-provider:
+	You use this plugin to define requirements and versions in custom JIRA fields.. 
+thucydides-structure-plugin-requirements-provider
+	This plugin provides integration with the JIRA structure plugin. 
+
+You should not include a dependency on more than one of the JIRA requirements provider plugins.
+
+A few configuration options are used for all of the plugins:
+
+--------------------
+jira.url=http://my.jira.server
+jira.project=DEMO
+jira.username=scott
+jira.password=tiger
+--------------------
+
+=== Reporting on versions
+
+Thucydides lets you report on test results from several different points of view, including requirements (epics, stories, features, capabilites etc.) and versions. You can deactivate this reporting using the +thucydides.report.show.releases+ property in your +thucydides.properties+ file, e.g.
+
+----------------
+thucydides.report.show.releases = false
+----------------
+
+=== Using JIRA versions
+
+By default, Thucydides will read version details from the Releases in JIRA. Test outcomes will be associated with a particular version using the "Fixed versions" field. 
+
+JIRA uses a flat version structure - you can't have for example releases that are made up of a number of sprints. Thucydides lets you organize these in a hierarchical structure based on a simple naming convention. By default, Thucydides uses "release" as the highest level release, and either "iteration" or "sprint" as the second level. For example, suppose you have the the following list of versions in JIRA
+
+- Release 1
+- Iteration 1.1
+- Iteration 1.2
+- Release 2
+- Release 3
+
+This will produce Release reports for Release 1, Release 2, and Release 3, with Iteration 1.2 and Iteration 1.2 appearing underneath Release 1. The reports will contain the list of requirements and test outcomes associated with each release.
+
+You can customize the names of the types of release usinge the +thucydides.release.types+ property, e.g. 
+----------------
+thucydides.release.types=milestone, release, version 
+----------------
+
+=== Retrieving manual test results from Zephyr
+
+Zephyr is a JIRA plugin that lets you store and manage manual test cases in JIRA. To get a complete picture of how well an application has been tested, we need to take into account both automated and manual test results. To let you do this with Zephyr, Thucydides provides an Adaptor to import data from Zephyr. This Adaptor reads test cases from Zephyr and converts them into manual Thucydides test outcomes, stored in the Thucydides working directory (usually +target/site/thucydides+). Thucydides can then include them in the aggregate reports when you run +mvn thucydides:aggregate+.
+
+You can integrate with Zephyr simply by adding a dependency on the +thucydides-jira-zephyr-adaptor+ in your +pom.xml+ file.
+
+---------------------
+<dependency>
+	<groupId>net.thucydides.plugins.jira</groupId>
+	<artifactId>thucydides-jira-zephyr-adaptor</artifactId>
+	<version>0.9.220</version>
+</dependency>
+---------------------
+
+You also need to declare the adaptor in your +thucydides.properties+ file:
+
+--------------------
+thucydides.adaptors.zephyr=net.thucydides.plugins.jira.adaptors.ZephyrAdaptor
+--------------------
+
+Thucydides will now let you use it to import the test results from Zephyr, using the +thucydides:import+ command. You need to provide the +import.format+ parameter to tell Thucydides what adaptor you want to use:
+
+--------------
+$ thucydides:import -Dimport.format=zephyr
+--------------
+
+The manual test results will then appear in the reports, as shown here:
+
+[[fig-zephyr-tests]]
+.Manual test results imported from Zephyr
+image::figs/manual-zephyr-tests.png[scaledwidth="80%", width=475]
