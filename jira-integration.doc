@@ -7,13 +7,14 @@ A number of Thucydides plugins for JIRA are available for different JIRA configu
 There are several plugins available, that are used for different purposes. All of the JIRA plugins use the *@Issue* annotation (or equivalent) to associate executed tests with a requirement defined in JIRA. In addition to using them out-of-the-box, the source code for the JIRA Thucydides plugins can be used to write your own custom integration plugins for JIRA or other systems. 
 
 .Thucydides JIRA plugins
-thucydides-jira-plugin::
+
+  * thucydides-jira-plugin:
 	A client library for the JIRA RESTful interface. This library is used by the other plugins, and is not usually used directly unless you want to write your own JIRA integration plugin.
-thucydides-jira-requirements-provider:
+  * thucydides-jira-requirements-provider:
 	Reads the requirements structure from the Epics and Stories in JIRA. It reads Epic cards as the top-level requirements and Story cards underneath the Epics. It also reads the versions defined in the JIRA project, using the *Fix Version* field to associated test results with particular versions. Many organizations customize their JIRA card structure, so this plugin is a good place to start if you have a more specific card organization.
-thucydides-jira-customfield-requirements-provider:
+* thucydides-jira-customfield-requirements-provider:
 	You use this plugin to define requirements and versions in custom JIRA fields.. 
-thucydides-structure-plugin-requirements-provider
+* thucydides-structure-plugin-requirements-provider
 	This plugin provides integration with the JIRA structure plugin. 
 
 You should not include a dependency on more than one of the JIRA requirements provider plugins.
