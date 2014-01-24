@@ -74,7 +74,7 @@ include::jbehave.doc[]
 
 == Defining Page Objects   
   
-include::page-objects.doc[]
+include::page-object.doc[]
 
 == Advanced JIRA Integration
 
