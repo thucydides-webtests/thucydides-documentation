@@ -1,4 +1,4 @@
-= The Thucydides Reference Manual
+﻿= The Thucydides Reference Manual
 John Ferguson Smart
 v0.9.229, January 2014
 
@@ -46,11 +46,11 @@ contained herein.
 [[introduction]]
 == Introducing Thucydides
 
-Thucydides (Thoo-SID-a-dees) is a tool designed to make writing automated acceptance and regression tests easier. It provides features that make it easier to organize and structure your acceptance tests, associating them with the user stories or features that they test. As the tests are executed, Thucydides generates illustrated documentation describing how the application is used based on the stories described by the tests. 
+Thucydides (Thoo-SID-a-dees) is a tool designed to make writing automated acceptance and regression tests easier ( Refer to Pt. 3 ). It provides features that make it easier to organize and structure your acceptance tests, associating them with the user stories or features that they test. As the tests are executed, Thucydides generates illustrated documentation describing how the application is used based on the stories described by the tests. 
 
-Thucydides provides strong support for automated web tests based on Selenium 2, though it can also be used effectively for non-web tests.
+Thucydides provides strong support for automated web tests based on Selenium 2 ( http://docs.seleniumhq.org/projects/webdriver/ ), though it can also be used effectively for non-web tests ( ? ).
           
-Thucydides was a Greek historian known for his astute analysis skills who rigorously recorded events that he witnessed and participated in himself. In the same way, the Thucydides framework observes and analyzes your acceptance tests, and records a detailed account of their execution.
+Thucydides was a Greek historian ( http://en.wikipedia.org/wiki/Thucydides ) known for his astute analysis skills who rigorously recorded events that he witnessed and participated in himself. In the same way, the Thucydides framework observes and analyzes your acceptance tests, and records a detailed account of their execution.
                 
 [[basic-concepts]]
 
