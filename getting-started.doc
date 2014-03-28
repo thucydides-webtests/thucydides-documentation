@@ -1,11 +1,25 @@
-=== Creating a new Thucydides project
+﻿=== Creating a new Thucydides project
 
-The easiest way to start a new Thucydides project is to use the Maven archetype. Three archetypes are currently available: one for using Thucydides with JUnit, another if you also want to write your acceptance tests (or a part of them) using http://www.easyb.org/[easyb], and finally one more to help you write acceptance tests in jBehave. In this section, we will create a new Thucydides project using the Thucydides archetype, and go through the essential features of this project.
+The easiest way to start a new Thucydides project is to use the Maven archetype. 
+Three archetypes are currently available: 
+1. one for using Thucydides with JUnit, 
+2. another if you also want to write your acceptance tests (or a part of them) using http://www.easyb.org/[easyb], and 
+3. finally one more to help you write acceptance tests in jBehave. 
 
-From the command line, you can run *mvn archetype:generate* and then select the *net.thucydides.thucydides-easyb-archetype* archetype from the proposed list of archetypes. Or you can use your favorite IDE to generate a new Maven project using an archetype.
+In this section, we will create a new Thucydides project using the Thucydides archetype, and go through the essential features of this project.
+
+From the command line, you can run *mvn archetype:generate* and then select the *net.thucydides.thucydides-easyb-archetype* archetype from the proposed list of archetypes. 
+Or you can use your favorite IDE to generate a new Maven project using an archetype.
                            
 --------------------------
 $ mvn archetype:generate
+
+xxx: remote -> net.thucydides:thucydides-easyb-archetype (Thucydides automated acceptance testing project using Selenium 2, JUnit and easyb)
+xxx: remote -> net.thucydides:thucydides-jbehave-archetype (Thucydides automated acceptance testing project using Selenium 2, JUnit and JBehave)
+xxx: remote -> net.thucydides:thucydides-simple-archetype (Thucydides automated acceptance testing project using Selenium 2 and JUnit)
+
+$ Choose a number or apply filter (format: [groupId:]artifactId, case sensitive contains): 359:xxx  ( Enter correct value )
+$ Choose a number:xx:xx  ( Enter last project value )
 ...
 Define value for property 'groupId': : com.mycompany
 Define value for property 'artifactId': : webtests
@@ -26,7 +40,7 @@ package: com.mycompany
 [INFO] ------------------------------------------------------------------------
 --------------------------
 
-This will create a simple Thucydides project, complete with a Page Object, a Step library and two test cases, one using JUnit, and one using easyb. The actual tests run against the online dictionary at Wiktionary.org. Before going any further, take the project for a spin. First, however, you will need to add the +net.thucydides.maven.plugins+ to your plugin groups in your +settings.xml+ file:
+This will create a simple Thucydides project, complete with a Page Object, a Step library and two test cases, one using JUnit, and one using easyb. The actual tests run against the online dictionary at Wiktionary.org. Before going any further, take the project for a spin. First, however, you will need to add the +net.thucydides.maven.plugins+ to your plugin groups in your +settings.xml+ file ( present under maven installation directory ):
 
 
 ---------------------------
@@ -56,7 +70,7 @@ Now for the details. the project directory structure is shown here:
    + main
       + java
          + com.mycompany.pages
-            - HomePage.java   
+            - DictionaryPage.java   
 
    + test
       + java
@@ -65,8 +79,7 @@ Now for the details. the project directory structure is shown here:
                - Application.java
             + steps
                - EndUserSteps.java
-            - LookupADefinitionStoryTest.java 
-
+           
       + stories
          + com.mycompany
             - LookupADefinition.story
@@ -176,7 +189,7 @@ Page Objects are a way of encapsulating the implementation details about a parti
 @DefaultUrl("http://en.wiktionary.org/wiki/Wiktionary:Main_Page")
 public class SearchPage extends PageObject {
 
-    @FindBy(name="search")
+              @FindBy(name="search")
 	private WebElement searchInput;
 	
 	@FindBy(name="go")
@@ -245,5 +258,6 @@ You can set custom web driver capabilities by passing a semi-colon separated lis
 
 --------------------------
 "build:build-1234; max-duration:300; single-window:true; tags:[tag1,tag2,tag3]"
---------------------------
- 
+
+Refer to section Running Thcydides tests from the command line 
+
